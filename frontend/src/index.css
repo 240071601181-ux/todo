@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-surface: #e6e0e9;
+  --color-on-primary-fixed: #22005d;
+  --color-primary-container: #6750a4;
+  --color-on-primary-fixed-variant: #4f378a;
+  --color-surface-container: #211f24;
+  --color-outline: #948e9c;
+  --color-surface-variant: #36343a;
+  --color-secondary: #cdc0e9;
+  --color-on-error-container: #ffdad6;
+  --color-secondary-fixed-dim: #cdc0e9;
+  --color-inverse-primary: #6750a4;
+  --color-surface-tint: #cfbcff;
+  --color-inverse-on-surface: #322f35;
+  --color-primary-fixed: #e9ddff;
+  --color-inverse-surface: #e6e0e9;
+  --color-primary: #cfbcff;
+  --color-background: #141218;
+  --color-on-secondary-fixed-variant: #4b4263;
+  --color-surface-container-lowest: #0f0d13;
+  --color-surface-container-high: #2b292f;
+  --color-surface-bright: #3b383e;
+  --color-outline-variant: #494551;
+  --color-secondary-container: #4d4465;
+  --color-on-tertiary-fixed-variant: #594400;
+  --color-on-primary: #381e72;
+  --color-surface-container-low: #1d1b20;
+  --color-error-container: #93000a;
+  --color-on-tertiary-fixed: #241a00;
+  --color-surface-container-highest: #36343a;
+  --color-surface-dim: #141218;
+  --color-on-tertiary: #3e2e00;
+  --color-error: #ffb4ab;
+  --color-on-secondary: #342b4b;
+  --color-on-surface-variant: #cbc4d2;
+  --color-on-error: #690005;
+  --color-secondary-fixed: #e9ddff;
+  --color-tertiary: #F5C15D;
+  --color-on-background: #e6e0e9;
+  --color-tertiary-fixed-dim: #e7c365;
+  --color-tertiary-fixed: #ffdf93;
+  --color-on-primary-container: #e0d2ff;
+  --color-on-tertiary-container: #503d00;
+  --color-on-secondary-fixed: #1f1635;
+  --color-surface: #161616;
+  --color-tertiary-container: #c9a74d;
+  --color-primary-fixed-dim: #cfbcff;
+  --color-on-secondary-container: #bfb2da;
+
+  --font-body-md: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-title-lg: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-label-caps: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display-lg: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-display-lg-mobile: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-headline-md: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-body-sm: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 1;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight: 600;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.5;
+  --text-body-sm--font-weight: 400;
+  --text-title-lg: 18px;
+  --text-title-lg--line-height: 1.5;
+  --text-title-lg--font-weight: 600;
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 800;
+  --text-display-lg-mobile: 32px;
+  --text-display-lg-mobile--line-height: 1.2;
+  --text-display-lg-mobile--font-weight: 800;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 1.3;
+  --text-headline-md--font-weight: 700;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.6;
+  --text-body-md--font-weight: 400;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-body-md);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility active-glow {
+  box-shadow: 0 0 12px rgba(245, 193, 93, 0.2);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-fade-in-down {
+  animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
