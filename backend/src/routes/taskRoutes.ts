@@ -7,8 +7,10 @@ const router = Router()
 router.use(authenticate)
 
 router.get('/', taskController.list)
+router.get('/:id', taskController.getById)
 router.post('/', taskController.create)
-router.patch('/:id/toggle', taskController.toggle)
+router.put('/:id', taskController.update)
+router.patch('/:id/complete', taskController.toggle)
 router.delete('/:id', taskController.remove)
 
 export default router
