@@ -1,8 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
-import { verifyToken } from '../utils/jwt.js'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { verifyAccessToken } from '../utils/jwt.js'
+import prisma from '../utils/prisma.js'
 
 export async function authenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization
@@ -14,7 +12,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   const token = authHeader.split(' ')[1]
 
   try {
-    const { userId } = verifyToken(token)
+    const { userId } = verifyAccessToken(token)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, name: true },
@@ -28,6 +26,6 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     req.user = user
     next()
   } catch {
-    res.status(401).json({ message: 'Invalid token' })
+    res.status(401).json({ message: 'Invalid or expired token' })
   }
 }

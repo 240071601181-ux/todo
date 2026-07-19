@@ -17,8 +17,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lists List[]
-  tasks Task[]
+  lists         List[]
+  tasks         Task[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model List {
