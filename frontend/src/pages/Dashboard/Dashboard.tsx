@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
 
 export default function Dashboard() {
   const { dateStr, greeting } = useDate()
-  const { tasks, toggleTask, addTask } = useTasks()
+  const { tasks, toggleTask, addTask, isLoading, isError, error } = useTasks()
   const [activeSort, setActiveSort] = useState<SortMethod>('priority')
 
   return (
@@ -29,7 +29,13 @@ export default function Dashboard() {
       <main className="w-[55%] h-full bg-surface flex flex-col px-12 py-12 overflow-hidden">
         <DashboardHeader dateStr={dateStr} greeting={greeting} />
         <AddTaskInput onAdd={addTask} />
-        <TaskList tasks={tasks} onToggle={toggleTask} />
+        <TaskList
+          tasks={tasks}
+          onToggle={toggleTask}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+        />
       </main>
 
       <aside className="w-1/4 min-w-[260px] h-screen bg-surface-container-low border-l border-outline-variant flex flex-col px-8 py-12 overflow-y-auto">

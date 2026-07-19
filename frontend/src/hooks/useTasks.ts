@@ -1,66 +1,89 @@
-import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import * as taskService from '../services/taskService'
 import type { Task } from '../types/todo'
 
-const initialTasks: Task[] = [
-  {
-    id: '1',
-    title: "Call Max about weekend trip",
-    tag: '#REMINDER',
-    tagVariant: 'tertiary',
-    time: 'Today at 4:30 PM',
-    completed: false,
-  },
-  {
-    id: '2',
-    title: 'Go to Gym',
-    tag: '#HEALTH',
-    tagVariant: 'primary',
-    time: '6:00 PM - Chest & Shoulders',
-    completed: false,
-  },
-  {
-    id: '3',
-    title: 'Pick up dry cleaning',
-    tag: '#ERRANDS',
-    tagVariant: 'surface',
-    time: 'Friday, Oct 25',
-    completed: false,
-  },
-  {
-    id: '4',
-    title: 'Buy birthday gift for Sarah',
-    tag: '#LIFE',
-    tagVariant: 'surface',
-    time: 'Completed',
-    completed: true,
-  },
-]
-
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const queryClient = useQueryClient()
 
-  const toggleTask = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    )
+  const { data: lists } = useQuery({
+    queryKey: ['lists'],
+    queryFn: taskService.fetchLists,
+    staleTime: 60_000,
+    retry: 2,
+  })
+
+  const defaultListId = lists?.[0]?.id
+
+  const tasksQuery = useQuery({
+    queryKey: ['tasks'],
+    queryFn: taskService.fetchTasks,
+    staleTime: 30_000,
+    retry: 2,
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: (id: string) => taskService.toggleTaskCompletion(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      )
+      return { previous }
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['tasks'], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+
+  const addMutation = useMutation({
+    mutationFn: (title: string) => {
+      if (!defaultListId) {
+        throw new Error('No list available. Create a list first.')
+      }
+      return taskService.createTask(title, defaultListId)
+    },
+    onMutate: async (title) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      const optimistic: Task = {
+        id: `temp-${crypto.randomUUID()}`,
+        title,
+        tag: '#NEW',
+        tagVariant: 'tertiary',
+        time: new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+        completed: false,
+      }
+      queryClient.setQueryData<Task[]>(['tasks'], (old) => [optimistic, ...(old ?? [])])
+      return { previous }
+    },
+    onError: (_err, _title, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['tasks'], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+
+  return {
+    tasks: tasksQuery.data ?? [],
+    toggleTask: toggleMutation.mutate,
+    addTask: addMutation.mutate,
+    isLoading: tasksQuery.isLoading,
+    isError: tasksQuery.isError,
+    error: tasksQuery.error,
+    isFetching: tasksQuery.isFetching,
   }
-
-  const addTask = (title: string) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title,
-      tag: '#NEW',
-      tagVariant: 'tertiary',
-      time: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-      completed: false,
-    }
-    setTasks((prev) => [newTask, ...prev])
-  }
-
-  return { tasks, toggleTask, addTask }
 }
