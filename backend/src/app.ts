@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
 import listRoutes from './routes/listRoutes.js'
 import analyticsRoutes from './routes/analyticsRoutes.js'
+import activityRoutes from './routes/activityRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import tagRoutes from './routes/tagRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
@@ -30,6 +31,7 @@ app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/tasks', globalLimiter, taskRoutes)
 app.use('/api/lists', globalLimiter, listRoutes)
 app.use('/api/analytics', globalLimiter, responseCache(120), analyticsRoutes)
+app.use('/api/activities', globalLimiter, activityRoutes)
 app.use('/api/categories', globalLimiter, categoryRoutes)
 app.use('/api/tags', globalLimiter, tagRoutes)
 app.use('/api/projects', globalLimiter, projectRoutes)

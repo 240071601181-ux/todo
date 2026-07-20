@@ -39,6 +39,7 @@ function mapBackendUser(user: authService.BackendUser): UserProfile {
     streakDays: 0,
     productivityScore: 0,
     weeklyTaskCount: [0, 0, 0, 0, 0, 0, 0],
+    productivityTrend: 0,
     level: 1,
     xp: 0,
     nextLevelXp: 1000,

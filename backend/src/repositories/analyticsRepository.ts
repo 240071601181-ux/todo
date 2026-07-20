@@ -10,6 +10,11 @@ export interface AnalyticsResult {
   weeklyCompletedCount: number[]
   productivityScore: number
   completedToday: number
+  xp: number
+  level: number
+  nextLevelXp: number
+  streakDays: number
+  productivityTrend: number
 }
 
 export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
@@ -24,23 +29,18 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
   monday.setHours(0, 0, 0, 0)
   const weekEnd = new Date(monday.getTime() + 7 * 86_400_000)
 
-  const [totalTasks, completedTasks, dueToday, overdue, categoryStats, completedThisWeek, completedToday] =
+  const lastWeekStart = new Date(monday.getTime() - 7 * 86_400_000)
+  const lastWeekEnd = new Date(monday.getTime())
+
+  const [totalTasks, completedTasks, dueToday, overdue, categoryStats, completedThisWeek, completedToday, lastWeekCompletions, allCompletedDates] =
     await Promise.all([
       prisma.task.count({ where: { userId } }),
       prisma.task.count({ where: { userId, completed: true } }),
       prisma.task.count({
-        where: {
-          userId,
-          completed: false,
-          dueDate: { gte: startOfDay, lt: endOfDay },
-        },
+        where: { userId, completed: false, dueDate: { gte: startOfDay, lt: endOfDay } },
       }),
       prisma.task.count({
-        where: {
-          userId,
-          completed: false,
-          dueDate: { lt: startOfDay },
-        },
+        where: { userId, completed: false, dueDate: { lt: startOfDay } },
       }),
       prisma.task.groupBy({
         by: ['categoryId'],
@@ -50,19 +50,19 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
         take: 1,
       }),
       prisma.task.findMany({
-        where: {
-          userId,
-          completed: true,
-          updatedAt: { gte: monday, lt: weekEnd },
-        },
+        where: { userId, completed: true, updatedAt: { gte: monday, lt: weekEnd } },
         select: { updatedAt: true },
       }),
       prisma.task.count({
-        where: {
-          userId,
-          completed: true,
-          updatedAt: { gte: startOfDay, lt: endOfDay },
-        },
+        where: { userId, completed: true, updatedAt: { gte: startOfDay, lt: endOfDay } },
+      }),
+      prisma.task.count({
+        where: { userId, completed: true, updatedAt: { gte: lastWeekStart, lt: lastWeekEnd } },
+      }),
+      prisma.task.findMany({
+        where: { userId, completed: true },
+        select: { updatedAt: true },
+        orderBy: { updatedAt: 'desc' },
       }),
     ])
 
@@ -85,6 +85,11 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
     ? Math.min(1000, completionPercent * 10)
     : 0
 
+  const thisWeekTotal = weeklyCompletedCount.reduce((a, b) => a + b, 0)
+  const productivityTrend = lastWeekCompletions > 0
+    ? Math.round(((thisWeekTotal - lastWeekCompletions) / lastWeekCompletions) * 100)
+    : thisWeekTotal > 0 ? 100 : 0
+
   let mostActiveCategory: { id: string; name: string; count: number } | null = null
   if (categoryStats.length > 0 && categoryStats[0].categoryId) {
     const category = await prisma.category.findUnique({
@@ -100,6 +105,27 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
     }
   }
 
+  const xp = completedTasks * 100
+  const level = Math.max(1, Math.floor(Math.sqrt(xp / 500)) + 1)
+  const nextLevelXp = Math.pow(level + 1, 2) * 500
+
+  const dateSet = new Set<string>()
+  for (const t of allCompletedDates) {
+    dateSet.add(t.updatedAt.toISOString().split('T')[0])
+  }
+
+  let streakDays = 0
+  const cursor = new Date(startOfDay)
+  while (true) {
+    const ds = cursor.toISOString().split('T')[0]
+    if (dateSet.has(ds)) {
+      streakDays++
+      cursor.setDate(cursor.getDate() - 1)
+    } else {
+      break
+    }
+  }
+
   return {
     completedTasks,
     pendingTasks,
@@ -110,5 +136,10 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
     weeklyCompletedCount,
     productivityScore,
     completedToday,
+    xp,
+    level,
+    nextLevelXp,
+    streakDays,
+    productivityTrend,
   }
 }

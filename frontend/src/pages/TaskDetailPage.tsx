@@ -13,6 +13,11 @@ export default function TaskDetailPage() {
 
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState<taskService.BackendCategory[]>([])
+
+  useEffect(() => {
+    taskService.getCategories().then(setCategories).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -44,6 +49,7 @@ export default function TaskDetailPage() {
     priority?: string
     status?: string
     dueDate?: string
+    categoryId?: string | null
   }) => {
     if (!id || !task) return
     try {
@@ -51,7 +57,8 @@ export default function TaskDetailPage() {
       if (data.title) updateData.title = data.title
       if (data.description !== undefined) updateData.description = data.description
       if (data.priority) updateData.priority = taskService.mapPriorityToNumber(data.priority as any)
-      if (data.dueDate) updateData.dueDate = new Date(data.dueDate).toISOString()
+      if (data.categoryId !== undefined) updateData.categoryId = data.categoryId || null
+      if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate).toISOString() : null
 
       if (data.status) {
         if (data.status === 'done' || data.status === 'todo') {
@@ -122,6 +129,7 @@ export default function TaskDetailPage() {
       }}
       setSelectedTaskId={() => navigate('/tasks')}
       accentColor={settings.accentColor}
+      categories={categories}
     />
   )
 }

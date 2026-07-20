@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Task, TaskStatus, TaskPriority } from '../types';
 import * as taskService from '../services/taskService';
+import type { BackendCategory, BackendTag } from '../services/taskService';
 
 interface TasksScreenProps {
   tasks: Task[];
@@ -36,6 +37,8 @@ interface TasksScreenProps {
   onSearchChange: (query: string) => void;
   filterProject: string;
   onFilterProjectChange: (value: string) => void;
+  filterCategory: string;
+  onFilterCategoryChange: (value: string) => void;
   filterPriority: string;
   onFilterPriorityChange: (value: string) => void;
   filterStatus: string;
@@ -49,6 +52,9 @@ interface TasksScreenProps {
   total: number;
   onPageChange: (page: number) => void;
   onRefresh: () => void;
+  // Master data for modals & filters
+  categories: BackendCategory[];
+  allTags: BackendTag[];
   // Actions
   onToggleTask: (taskId: string, e: React.MouseEvent) => void;
   onDeleteTask: (taskId: string, e: React.MouseEvent) => void;
@@ -57,6 +63,8 @@ interface TasksScreenProps {
     description: string;
     priority: string;
     listId: string;
+    categoryId?: string;
+    dueDate?: string;
     tagIds?: string[];
   }) => void;
   onArchiveTask?: (taskId: string) => void;
@@ -73,6 +81,8 @@ export default function TasksScreen({
   onSearchChange,
   filterProject,
   onFilterProjectChange,
+  filterCategory,
+  onFilterCategoryChange,
   filterPriority,
   onFilterPriorityChange,
   filterStatus,
@@ -86,6 +96,8 @@ export default function TasksScreen({
   total,
   onPageChange,
   onRefresh,
+  categories,
+  allTags,
   onToggleTask,
   onDeleteTask,
   onCreateTask,
@@ -100,21 +112,25 @@ export default function TasksScreen({
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newProjId, setNewProjId] = useState('');
+  const [newCategoryId, setNewCategoryId] = useState('');
   const [newPriority, setNewPriority] = useState<TaskPriority>('medium');
+  const [newDueDate, setNewDueDate] = useState('');
   const [newStoryPoints, setNewStoryPoints] = useState(3);
   const [newTags, setNewTags] = useState('');
 
   // Filtering logic (local filtering on already-fetched data)
   const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          task.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = searchQuery === '' ||
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesProject = filterProject === 'all' || task.projectId === filterProject;
+    const matchesCategory = filterCategory === 'all' || task.categoryId === filterCategory;
     const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
 
-    return matchesSearch && matchesProject && matchesPriority && matchesStatus;
+    return matchesSearch && matchesProject && matchesCategory && matchesPriority && matchesStatus;
   });
 
   const getAccentColorHex = () => {
@@ -187,9 +203,19 @@ export default function TasksScreen({
         <div>
           {/* Card Top Row */}
           <div className="flex justify-between items-start gap-2 mb-2">
-            <span className="text-[9px] font-mono tracking-wider text-slate-500 uppercase truncate max-w-[120px]">
-              {task.projectName}
-            </span>
+            <div className="flex items-center gap-1.5 truncate min-w-0">
+              <span className="text-[9px] font-mono tracking-wider text-slate-500 uppercase truncate">
+                {task.projectName}
+              </span>
+              {task.categoryName && (
+                <>
+                  <span className="text-[9px] text-slate-700">/</span>
+                  <span className="text-[9px] font-mono tracking-wider text-slate-600 uppercase truncate">
+                    {task.categoryName}
+                  </span>
+                </>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full border ${
                 task.priority === 'urgent' 
@@ -435,6 +461,21 @@ export default function TasksScreen({
                   <option key={pid} value={pid} className="bg-[#0a0d14]">{task.projectName.toUpperCase()}</option>
                 ) : null;
               })}
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center gap-1.5 bg-[#07090d] border border-slate-800/80 px-2.5 py-1.5 rounded-xl">
+            <Filter className="w-3.5 h-3.5 text-slate-500" />
+            <select
+              value={filterCategory}
+              onChange={(e) => onFilterCategoryChange(e.target.value)}
+              className="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
+            >
+              <option value="all" className="bg-[#0a0d14]">ALL CATEGORIES</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id} className="bg-[#0a0d14]">{cat.name.toUpperCase()}</option>
+              ))}
             </select>
           </div>
 
@@ -735,15 +776,28 @@ export default function TasksScreen({
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!newTitle.trim()) return;
+
+              const tagNames = newTags.split(',').map(t => t.trim()).filter(Boolean);
+              const tagIds = tagNames
+                .map(name => allTags.find(t => t.name.toLowerCase() === name.toLowerCase()))
+                .filter((t): t is BackendTag => !!t)
+                .map(t => t.id);
+
               onCreateTask({
                 title: newTitle,
                 description: newDesc || 'No extended documentation compiled.',
                 priority: newPriority,
                 listId: newProjId,
+                categoryId: newCategoryId || undefined,
+                dueDate: newDueDate || undefined,
+                tagIds: tagIds.length > 0 ? tagIds : undefined,
               });
               setNewTitle('');
               setNewDesc('');
+              setNewProjId('');
+              setNewCategoryId('');
               setNewPriority('medium');
+              setNewDueDate('');
               setNewStoryPoints(3);
               setNewTags('');
               setShowAddModal(false);
@@ -773,7 +827,7 @@ export default function TasksScreen({
                 />
               </div>
 
-              {/* Project select & priority row */}
+              {/* Project select & category row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Project Scope</label>
@@ -792,6 +846,23 @@ export default function TasksScreen({
                 </div>
 
                 <div>
+                  <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Category</label>
+                  <select
+                    value={newCategoryId}
+                    onChange={(e) => setNewCategoryId(e.target.value)}
+                    className="w-full bg-[#07090d] border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
+                  >
+                    <option value="" className="bg-[#0a0d14]">NONE</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id} className="bg-[#0a0d14]">{cat.name.toUpperCase()}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Priority & due date row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Urgency Weight</label>
                   <select
                     value={newPriority}
@@ -803,6 +874,16 @@ export default function TasksScreen({
                     <option value="high">⚠️ HIGH</option>
                     <option value="urgent">🛑 URGENT</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Due Date</label>
+                  <input
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="w-full bg-[#07090d] border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-200 font-mono focus:outline-none"
+                  />
                 </div>
               </div>
 

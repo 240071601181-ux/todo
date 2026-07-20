@@ -17,6 +17,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { Task, Milestone, Comment, TaskStatus, TaskPriority } from '../types';
+import type { BackendCategory } from '../services/taskService';
 
 interface TaskDetailsScreenProps {
   task: Task | null;
@@ -26,6 +27,7 @@ interface TaskDetailsScreenProps {
     priority?: string;
     status?: string;
     dueDate?: string;
+    categoryId?: string | null;
   }) => void;
   onDelete: () => void;
   onArchive: () => void;
@@ -33,6 +35,7 @@ interface TaskDetailsScreenProps {
   setActiveTab: (tab: string) => void;
   setSelectedTaskId: (id: string | null) => void;
   accentColor: string;
+  categories: BackendCategory[];
 }
 
 export default function TaskDetailsScreen({ 
@@ -43,7 +46,8 @@ export default function TaskDetailsScreen({
   onRestore,
   setActiveTab, 
   setSelectedTaskId,
-  accentColor
+  accentColor,
+  categories
 }: TaskDetailsScreenProps) {
   
   const [commentText, setCommentText] = useState('');
@@ -385,6 +389,20 @@ export default function TaskDetailsScreen({
             </div>
 
             <div className="space-y-2">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Category</span>
+              <select
+                value={task.categoryId ?? ''}
+                onChange={(e) => onUpdate({ categoryId: e.target.value || null })}
+                className="w-full bg-[#07090d] border border-slate-800/80 rounded-xl py-2 px-3 text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
+              >
+                <option value="" className="bg-[#0a0d14]">NONE</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id} className="bg-[#0a0d14]">{cat.name.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Urgency Weight</span>
               <select
                 value={task.priority}
@@ -401,8 +419,13 @@ export default function TaskDetailsScreen({
             <div className="space-y-1">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Target Timeline</span>
               <div className="flex items-center gap-2 text-xs text-slate-300 font-mono bg-[#07090d] px-3 py-2 rounded-xl border border-slate-800/60">
-                <Calendar className="w-4 h-4 text-slate-500" />
-                <span>{task.dueDate || 'No due date'}</span>
+                <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
+                <input
+                  type="date"
+                  value={task.dueDate || ''}
+                  onChange={(e) => onUpdate({ dueDate: e.target.value || '' })}
+                  className="bg-transparent text-xs text-slate-200 font-mono w-full focus:outline-none"
+                />
               </div>
             </div>
 

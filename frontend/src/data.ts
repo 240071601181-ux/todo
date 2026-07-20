@@ -8,6 +8,7 @@ export const INITIAL_USER: UserProfile = {
   streakDays: 14,
   productivityScore: 840,
   weeklyTaskCount: [5, 8, 12, 7, 14, 9, 4], // Mon-Sun
+  productivityTrend: 0,
   level: 12,
   xp: 3450,
   nextLevelXp: 5000

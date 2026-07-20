@@ -18,13 +18,22 @@ export default function TasksPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [filterProject, setFilterProject] = useState('all')
+  const [filterCategory, setFilterCategory] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [showArchived, setShowArchived] = useState(false)
   const [sortBy, setSortBy] = useState<string>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
+  const [categories, setCategories] = useState<taskService.BackendCategory[]>([])
+  const [allTags, setAllTags] = useState<taskService.BackendTag[]>([])
+
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    taskService.getCategories().then(setCategories).catch(() => {})
+    taskService.getTags().then(setAllTags).catch(() => {})
+  }, [])
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -39,6 +48,7 @@ export default function TasksPage() {
       if (searchQuery) params.search = searchQuery
 
       if (filterProject !== 'all') params.listId = filterProject
+      if (filterCategory !== 'all') params.categoryId = filterCategory
       if (filterPriority !== 'all') {
         params.priority = taskService.mapPriorityToNumber(filterPriority as any)
       }
@@ -62,7 +72,7 @@ export default function TasksPage() {
     } catch (err) {
       console.error('Failed to fetch tasks:', err)
     }
-  }, [page, limit, searchQuery, filterProject, filterPriority, filterStatus, sortBy, sortOrder, showArchived])
+  }, [page, limit, searchQuery, filterProject, filterCategory, filterPriority, filterStatus, sortBy, sortOrder, showArchived])
 
   useEffect(() => {
     fetchTasks()
@@ -103,6 +113,8 @@ export default function TasksPage() {
     description: string
     priority: string
     listId: string
+    categoryId?: string
+    dueDate?: string
     tagIds?: string[]
   }) => {
     try {
@@ -111,6 +123,9 @@ export default function TasksPage() {
         description: data.description || undefined,
         priority: taskService.mapPriorityToNumber(data.priority as any),
         listId: data.listId,
+        categoryId: data.categoryId || null,
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        tagIds: data.tagIds,
       })
       const lists = await listService.getLists()
       const listMap = new Map(lists.map(l => [l.id, l]))
@@ -153,6 +168,8 @@ export default function TasksPage() {
       onSearchChange={handleSearch}
       filterProject={filterProject}
       onFilterProjectChange={(v) => { setFilterProject(v); setPage(1) }}
+      filterCategory={filterCategory}
+      onFilterCategoryChange={(v) => { setFilterCategory(v); setPage(1) }}
       filterPriority={filterPriority}
       onFilterPriorityChange={(v) => { setFilterPriority(v); setPage(1) }}
       filterStatus={filterStatus}
@@ -166,6 +183,9 @@ export default function TasksPage() {
       total={total}
       onPageChange={setPage}
       onRefresh={fetchTasks}
+      // Master data for modals & filters
+      categories={categories}
+      allTags={allTags}
       // Actions
       onToggleTask={handleToggleTask}
       onDeleteTask={handleDeleteTask}

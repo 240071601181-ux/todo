@@ -4,7 +4,7 @@ import {
   Users, Activity, Clock, CheckCircle2, ChevronRight, Send, ArrowLeft, Sliders,
   TrendingUp, Plus, Pencil, Trash2, X, BarChart3, Calendar, ListTodo
 } from 'lucide-react';
-import { Project, Task } from '../types';
+import { Project, Task, UserProfile } from '../types';
 
 interface ProjectsScreenProps {
   projects: Project[];
@@ -26,7 +26,7 @@ interface ProjectsScreenProps {
   currentProjectId: string | null;
   setCurrentProjectId: (id: string | null) => void;
   accentColor: string;
-  userAvatar: string;
+  currentUser: UserProfile;
 }
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120';
@@ -34,7 +34,7 @@ const COLORS = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4'
 
 export default function ProjectsScreen({
   projects, setProjects, tasks, onCreateProject, onUpdateProject, onDeleteProject,
-  setSelectedTaskId, setActiveTab, currentProjectId, setCurrentProjectId, accentColor
+  setSelectedTaskId, setActiveTab, currentProjectId, setCurrentProjectId, accentColor, currentUser
 }: ProjectsScreenProps) {
   const [activeTabSub, setActiveTabSub] = useState<'backlog' | 'active_sprint' | 'qa_review'>('active_sprint');
   const [pulseInput, setPulseInput] = useState('');
@@ -42,6 +42,9 @@ export default function ProjectsScreen({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('');
   const [newProject, setNewProject] = useState<{ name: string; description: string; color: string; status: Project['status']; category: string; dueDate: string; progress: number }>({ name: '', description: '', color: '#3b82f6', status: 'active', category: '', dueDate: '', progress: 0 });
   const [editForm, setEditForm] = useState<{ name: string; description: string; color: string; status: Project['status']; category: string; dueDate: string; progress: number }>({ name: '', description: '', color: '#3b82f6', status: 'active', category: '', dueDate: '', progress: 0 });
 
@@ -139,6 +142,32 @@ export default function ProjectsScreen({
       progress: selectedProj.progress,
     });
     setShowEditModal(true);
+  };
+
+  const handleAddMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProj || !newMemberName.trim() || !newMemberRole.trim()) return;
+    const updated = [...selectedProj.stakeholders, {
+      name: newMemberName.trim(),
+      role: newMemberRole.trim(),
+      avatar: DEFAULT_AVATAR,
+    }];
+    setProjects(prev => prev.map(p =>
+      p.id === selectedProj.id ? { ...p, stakeholders: updated } : p,
+    ));
+    onUpdateProject(selectedProj.id, { stakeholders: updated });
+    setNewMemberName('');
+    setNewMemberRole('');
+    setShowAddMember(false);
+  };
+
+  const handleRemoveMember = (idx: number) => {
+    if (!selectedProj) return;
+    const updated = selectedProj.stakeholders.filter((_, i) => i !== idx);
+    setProjects(prev => prev.map(p =>
+      p.id === selectedProj.id ? { ...p, stakeholders: updated } : p,
+    ));
+    onUpdateProject(selectedProj.id, { stakeholders: updated });
   };
 
   if (selectedProj) {
@@ -428,24 +457,73 @@ export default function ProjectsScreen({
           {/* Right Column */}
           <div className="space-y-6">
             <div className="bg-[#0c0f16] border border-slate-800/60 p-5 rounded-2xl">
-              <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4 text-slate-400" /> Stakeholders
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-slate-400" /> Stakeholders
+                </h3>
+                <button
+                  onClick={() => setShowAddMember(!showAddMember)}
+                  className="p-1.5 bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer"
+                  title="Add Member"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {showAddMember && (
+                <form onSubmit={handleAddMember} className="mb-4 p-3 bg-[#07090d] border border-slate-800/80 rounded-xl space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Member name"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    className="w-full bg-[#0a0d14] border border-slate-800/80 rounded-lg py-1.5 px-2.5 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-blue-500/40 font-sans"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Role (e.g. Lead Engineer)"
+                    value={newMemberRole}
+                    onChange={(e) => setNewMemberRole(e.target.value)}
+                    className="w-full bg-[#0a0d14] border border-slate-800/80 rounded-lg py-1.5 px-2.5 text-xs text-slate-200 placeholder-slate-700 focus:outline-none focus:border-blue-500/40 font-sans"
+                    required
+                  />
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button type="button" onClick={() => setShowAddMember(false)}
+                      className="text-[10px] font-mono text-slate-500 hover:text-slate-300 px-2 py-1 cursor-pointer">Cancel</button>
+                    <button type="submit"
+                      className="text-[10px] font-mono text-white bg-blue-600 px-3 py-1 rounded-lg cursor-pointer hover:bg-blue-700">Add</button>
+                  </div>
+                </form>
+              )}
+
               <div className="space-y-3">
                 {selectedProj.stakeholders.map((person, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-slate-900/30 p-2.5 rounded-xl border border-slate-800/40">
+                  <div key={i} className="flex items-center gap-3 bg-slate-900/30 p-2.5 rounded-xl border border-slate-800/40 group">
                     <img
                       src={person.avatar}
                       alt={person.name}
                       className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-800/80"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <span className="text-xs font-semibold text-slate-200 block truncate leading-tight">{person.name}</span>
                       <span className="text-[9px] font-mono text-slate-500 uppercase block truncate mt-0.5">{person.role}</span>
                     </div>
+                    <button
+                      onClick={() => handleRemoveMember(i)}
+                      className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer shrink-0"
+                      title="Remove member"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
                 ))}
+                {selectedProj.stakeholders.length === 0 && (
+                  <div className="text-center py-4 text-slate-600 font-mono text-xs">
+                    No stakeholders assigned.
+                  </div>
+                )}
               </div>
             </div>
 

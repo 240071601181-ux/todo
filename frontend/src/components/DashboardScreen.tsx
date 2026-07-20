@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Task, Project, UserProfile, CalendarEvent, AppSettings } from '../types';
 import { toggleTask as apiToggleTask } from '../services/taskService';
+import type { ActivityItem } from '../services/activityService';
 
 interface DashboardScreenProps {
   user: UserProfile;
@@ -25,6 +26,7 @@ interface DashboardScreenProps {
   projects: Project[];
   events: CalendarEvent[];
   settings: AppSettings;
+  activities: ActivityItem[];
   setActiveTab: (tab: string) => void;
   setSelectedTaskId: (id: string | null) => void;
 }
@@ -37,6 +39,7 @@ export default function DashboardScreen({
   projects, 
   events, 
   settings, 
+  activities,
   setActiveTab,
   setSelectedTaskId
 }: DashboardScreenProps) {
@@ -62,6 +65,12 @@ export default function DashboardScreen({
   const focusMinutesToday = useMemo(() => {
     return completedTodayCount * 25 + user.streakDays * 5;
   }, [completedTodayCount, user.streakDays]);
+
+  const maxTasksInWeek = useMemo(() => {
+    return Math.max(...user.weeklyTaskCount, 1);
+  }, [user.weeklyTaskCount]);
+
+  const productivityTrendColor = user.productivityTrend >= 0 ? 'text-emerald-400' : 'text-red-400';
 
   // Toggle task status via API
   const handleToggleTask = async (taskId: string, e: React.MouseEvent) => {
@@ -221,12 +230,15 @@ export default function DashboardScreen({
             <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase block">Productivity Score</span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black font-display text-white">{user.productivityScore}</span>
-              <span className="text-[11px] font-mono text-emerald-400 font-bold flex items-center gap-0.5">
-                <TrendingUp className="w-3.5 h-3.5" /> +14.8%
+              <span className={`text-[11px] font-mono ${productivityTrendColor} font-bold flex items-center gap-0.5`}>
+                <TrendingUp className="w-3.5 h-3.5" /> {user.productivityTrend >= 0 ? '+' : ''}{user.productivityTrend}%
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">
-              Velocity Index: Optimal Performance
+              {user.productivityScore >= 800 ? 'Velocity Index: Optimal Performance' :
+               user.productivityScore >= 500 ? 'Velocity Index: Stable Growth' :
+               user.productivityScore >= 200 ? 'Velocity Index: Building Momentum' :
+               'Velocity Index: Initializing'}
             </p>
           </div>
           <div className="absolute top-3 right-3 text-slate-800 group-hover:text-slate-700 transition-colors">
@@ -306,8 +318,7 @@ export default function DashboardScreen({
             <div className="flex items-end justify-between h-44 px-4 z-10">
               {user.weeklyTaskCount.map((count, idx) => {
                 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                const maxVal = 15;
-                const pct = (count / maxVal) * 100;
+                const pct = (count / maxTasksInWeek) * 100;
                 return (
                   <div key={idx} className="flex flex-col items-center gap-2 flex-1 group">
                     <div className="relative w-full flex justify-center">
@@ -555,6 +566,40 @@ export default function DashboardScreen({
             <span>Operational State: Steady</span>
             <span style={{ color: activeAccent }}>SYSTEM LOCK v2.4</span>
           </div>
+        </div>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+              <Activity className="w-4 h-4" style={{ color: activeAccent }} /> Activity Feed
+            </h3>
+            <p className="text-[10px] text-slate-500 font-mono uppercase mt-0.5">Recent project & task operations</p>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+          {activities.length > 0 ? (
+            activities.map((act) => {
+              const actColor = act.type === 'task_completed' ? '#10b981' :
+                               act.type === 'task_created' ? '#3b82f6' : '#f59e0b';
+              return (
+                <div key={act.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-900/40 transition-colors">
+                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: actColor }} />
+                  <span className="text-xs text-slate-300 flex-1 truncate">{act.message}</span>
+                  <span className="text-[9px] font-mono text-slate-600 shrink-0">
+                    {new Date(act.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-6 text-slate-600 font-mono text-xs">
+              No recent activity recorded.
+            </div>
+          )}
         </div>
       </div>
 

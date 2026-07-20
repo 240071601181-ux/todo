@@ -10,6 +10,11 @@ export interface BackendAnalytics {
   weeklyCompletedCount: number[]
   productivityScore: number
   completedToday: number
+  xp: number
+  level: number
+  nextLevelXp: number
+  streakDays: number
+  productivityTrend: number
 }
 
 export async function getAnalytics(): Promise<BackendAnalytics> {

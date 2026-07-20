@@ -32,6 +32,8 @@ export interface Task {
   };
   projectId: string;
   projectName: string;
+  categoryId?: string;
+  categoryName?: string;
   storyPoints: number;
   milestones: Milestone[];
   comments: Comment[];
@@ -78,6 +80,7 @@ export interface UserProfile {
   streakDays: number;
   productivityScore: number;
   weeklyTaskCount: number[]; // Array of 7 numbers representing completed tasks per day of current week
+  productivityTrend: number; // Percentage change vs last week
   level: number;
   xp: number;
   nextLevelXp: number;

@@ -5,7 +5,7 @@ import * as projectService from '../services/projectService'
 
 export default function ProjectsPage() {
   const { id } = useParams<{ id: string }>()
-  const { projects, setProjects, tasks, settings } = useApp()
+  const { user, projects, setProjects, tasks, settings } = useApp()
   const navigate = useNavigate()
 
   const handleCreate = async (data: Parameters<typeof projectService.createProject>[0]) => {
@@ -51,7 +51,7 @@ export default function ProjectsPage() {
         if (projectId) navigate(`/projects/${projectId}`)
       }}
       accentColor={settings.accentColor}
-      userAvatar={settings.accentColor}
+      currentUser={user}
     />
   )
 }

@@ -219,6 +219,8 @@ export function mapTask(
     },
     projectId: bt.listId,
     projectName: listName,
+    categoryId: bt.categoryId ?? undefined,
+    categoryName: bt.category?.name ?? undefined,
     storyPoints: 1,
     milestones: [],
     comments: [],
