@@ -121,3 +121,67 @@ export const updateTagSchema = z.object({
 export const tagParamsSchema = z.object({
   id: z.string().uuid('Invalid tag ID'),
 })
+
+// CalendarEvent schemas
+export const createCalendarEventSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(500),
+  date: z.string().datetime('Invalid date'),
+  time: z.string().max(50).optional(),
+  duration: z.string().max(50).optional(),
+  type: z.enum(['task', 'meeting', 'milestone', 'focus']).optional(),
+  color: z.string().max(50).optional(),
+  taskId: z.string().uuid().optional().nullable(),
+})
+
+export const updateCalendarEventSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  date: z.string().datetime().optional(),
+  time: z.string().max(50).optional().nullable(),
+  duration: z.string().max(50).optional().nullable(),
+  type: z.enum(['task', 'meeting', 'milestone', 'focus']).optional(),
+  color: z.string().max(50).optional(),
+  taskId: z.string().uuid().optional().nullable(),
+})
+
+export const calendarEventParamsSchema = z.object({
+  id: z.string().uuid('Invalid event ID'),
+})
+
+// Project schemas
+export const createProjectSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200),
+  description: z.string().max(2000).optional(),
+  color: z.string().max(50).optional(),
+  status: z.enum(['planning', 'active', 'review', 'completed']).optional(),
+  progress: z.number().int().min(0).max(100).optional(),
+  dueDate: z.string().datetime().optional().nullable(),
+  category: z.string().max(200).optional(),
+  stakeholders: z
+    .array(z.object({
+      name: z.string().min(1),
+      avatar: z.string().min(1),
+      role: z.string().min(1),
+    }))
+    .optional(),
+})
+
+export const updateProjectSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).optional(),
+  color: z.string().max(50).optional(),
+  status: z.enum(['planning', 'active', 'review', 'completed']).optional(),
+  progress: z.number().int().min(0).max(100).optional(),
+  dueDate: z.string().datetime().optional().nullable(),
+  category: z.string().max(200).optional(),
+  stakeholders: z
+    .array(z.object({
+      name: z.string().min(1),
+      avatar: z.string().min(1),
+      role: z.string().min(1),
+    }))
+    .optional(),
+})
+
+export const projectParamsSchema = z.object({
+  id: z.string().uuid('Invalid project ID'),
+})

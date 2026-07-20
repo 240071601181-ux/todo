@@ -83,6 +83,8 @@ export interface UserProfile {
   nextLevelXp: number;
 }
 
+export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -91,4 +93,6 @@ export interface CalendarEvent {
   duration?: string; // e.g. "1h"
   type: 'task' | 'meeting' | 'milestone' | 'focus';
   color: string;
+  taskId?: string;
+  description?: string;
 }

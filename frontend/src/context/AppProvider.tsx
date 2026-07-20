@@ -8,6 +8,7 @@ import {
 } from '../data'
 import type { Task, Project, CalendarEvent, AppSettings, UserProfile } from '../types'
 import * as authService from '../services/authService'
+import * as projectService from '../services/projectService'
 
 interface AppContextValue {
   user: UserProfile
@@ -53,6 +54,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS)
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS)
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const backendProjects = await projectService.getProjects()
+      if (backendProjects.length > 0) {
+        setProjects(backendProjects.map(projectService.mapProject))
+      } else {
+        setProjects(INITIAL_PROJECTS)
+      }
+    } catch {
+      setProjects(INITIAL_PROJECTS)
+    }
+  }, [])
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
     if (!token) {
@@ -62,9 +76,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     authService
       .getMe()
-      .then((backendUser) => {
+      .then(async (backendUser) => {
         setUser(mapBackendUser(backendUser))
         setIsAuthenticated(true)
+        await fetchProjects()
       })
       .catch(async () => {
         const storedRefreshToken = localStorage.getItem('refreshToken')
@@ -75,6 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('refreshToken', refreshed.refreshToken)
             setUser(mapBackendUser(refreshed.user))
             setIsAuthenticated(true)
+            await fetchProjects()
           } catch {
             localStorage.removeItem('accessToken')
             localStorage.removeItem('refreshToken')
@@ -96,7 +112,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('refreshToken', response.refreshToken)
     setUser(mapBackendUser(response.user))
     setIsAuthenticated(true)
-  }, [])
+    await fetchProjects()
+  }, [fetchProjects])
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const response = await authService.register(name, email, password)
@@ -104,7 +121,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('refreshToken', response.refreshToken)
     setUser(mapBackendUser(response.user))
     setIsAuthenticated(true)
-  }, [])
+    await fetchProjects()
+  }, [fetchProjects])
 
   const logout = useCallback(async () => {
     const storedRefreshToken = localStorage.getItem('refreshToken')
