@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fastodo | Premium Productivity</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .active-glow {
+      box-shadow: 0px 0px 12px rgba(245, 193, 93, 0.2);
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#e6e0e9",
+            "on-primary-fixed": "#22005d",
+            "primary-container": "#6750a4",
+            "on-primary-fixed-variant": "#4f378a",
+            "surface-container": "#211f24",
+            "outline": "#948e9c",
+            "surface-variant": "#36343a",
+            "secondary": "#cdc0e9",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed-dim": "#cdc0e9",
+            "inverse-primary": "#6750a4",
+            "surface-tint": "#cfbcff",
+            "inverse-on-surface": "#322f35",
+            "primary-fixed": "#e9ddff",
+            "inverse-surface": "#e6e0e9",
+            "primary": "#cfbcff",
+            "background": "#141218",
+            "on-secondary-fixed-variant": "#4b4263",
+            "surface-container-lowest": "#0f0d13",
+            "surface-container-high": "#2b292f",
+            "surface-bright": "#3b383e",
+            "outline-variant": "#494551",
+            "secondary-container": "#4d4465",
+            "on-tertiary-fixed-variant": "#594400",
+            "on-primary": "#381e72",
+            "surface-container-low": "#1d1b20",
+            "error-container": "#93000a",
+            "on-tertiary-fixed": "#241a00",
+            "surface-container-highest": "#36343a",
+            "surface-dim": "#141218",
+            "on-tertiary": "#3e2e00",
+            "error": "#ffb4ab",
+            "on-secondary": "#342b4b",
+            "on-surface-variant": "#cbc4d2",
+            "on-error": "#690005",
+            "secondary-fixed": "#e9ddff",
+            "tertiary": "#F5C15D", /* Golden Brand Accent */
+            "on-background": "#e6e0e9",
+            "tertiary-fixed-dim": "#e7c365",
+            "tertiary-fixed": "#ffdf93",
+            "on-primary-container": "#e0d2ff",
+            "on-tertiary-container": "#503d00",
+            "on-secondary-fixed": "#1f1635",
+            "surface": "#161616",
+            "tertiary-container": "#c9a74d",
+            "primary-fixed-dim": "#cfbcff",
+            "on-secondary-container": "#bfb2da"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "24px",
+            "base": "8px",
+            "card-padding": "24px",
+            "container-margin": "32px",
+            "section-gap": "48px"
+          },
+          "fontFamily": {
+            "label-caps": ["Inter"],
+            "body-sm": ["Inter"],
+            "title-lg": ["Inter"],
+            "display-lg": ["Manrope"],
+            "display-lg-mobile": ["Manrope"],
+            "headline-md": ["Manrope"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+            "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+            "title-lg": ["18px", {"lineHeight": "1.5", "fontWeight": "600"}],
+            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "display-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "800"}],
+            "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-tertiary selection:text-black overflow-hidden h-screen">
+<!-- Main Layout Wrapper -->
+<div class="flex h-full w-full">
+<!-- LEFT SIDEBAR (20%) -->
+<aside class="w-1/5 flex flex-col h-screen py-8 px-6 bg-surface-container-low border-r border-outline-variant shadow-sm transition-all duration-300" id="SideNavBar">
+<div class="mb-12">
+<h1 class="font-display-lg text-display-lg-mobile font-extrabold text-primary mb-1">Fastodo</h1>
+<p class="font-body-md text-body-sm text-on-surface-variant opacity-70">Premium Productivity</p>
+</div>
+<div class="flex-grow">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 opacity-50 tracking-widest">My Lists</p>
+<nav class="space-y-2">
+<!-- Active State: Life -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-tertiary text-black font-bold active-glow transition-all duration-200 transform scale-100 hover:scale-[1.02]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">spa</span>
+<span>Life</span>
+</a>
+<!-- Inactive: Work -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">work</span>
+<span>Work</span>
+</a>
+<!-- Inactive: Project A -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span>Project A</span>
+</a>
+</nav>
+<button class="mt-8 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant text-on-surface font-semibold hover:bg-surface-container-highest transition-colors active:scale-95">
+<span class="material-symbols-outlined">add</span>
+<span>New List</span>
+</button>
+</div>
+<!-- Sidebar Footer -->
+<div class="pt-8 border-t border-outline-variant space-y-4">
+<div class="flex items-center gap-4 mb-6">
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional close-up portrait of a user in a high-end minimalist setting, soft cinematic lighting, neutral charcoal background, premium high-fashion aesthetic for a SaaS profile avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_GK-B1HcKD3GZqS4TMKQySgT_Ng5zJCk5J4a179R2XTjOjcJ5izDn3xS3oRRKoDrHeM3pgXNxQIfoAhL5uGQ2cPmEF7XkO2E8OetDaaRwQnMRbblDRYrhwDJ1ccIs7DnARYVeRFQICktk8O1gu-bMhOb8Xuz1IJXKoh51_WNBOAhEJyxM-rIizhdBC_lZx3DBDDHSiC4_BQKAPr-jvPWt-NeEOV6yRjDuvzqEE1S-B2mXy03LkSA5"/>
+<div>
+<p class="font-title-lg text-body-md font-bold text-on-surface">Alex Rivera</p>
+<p class="text-[12px] text-on-surface-variant opacity-60">Pro Account</p>
+</div>
+</div>
+<div class="space-y-2">
+<a class="flex items-center gap-3 text-on-surface-variant font-medium hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-body-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant font-medium hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-body-sm">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- CENTER CONTENT (55%) -->
+<main class="w-[55%] h-full bg-[#161616] flex flex-col px-12 py-12 overflow-hidden">
+<!-- Header Section -->
+<header class="mb-10 animate-fade-in-down">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-tertiary uppercase tracking-widest" id="current-date">October 24, 2023</p>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">search</span>
+</div>
+</div>
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">Good Afternoon.</h2>
+<p class="font-body-md text-on-surface-variant opacity-60">What's your plan for today?</p>
+</header>
+<!-- Add Todo Input -->
+<div class="relative mb-12 animate-fade-in-up">
+<div class="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-tertiary">add_circle</span>
+</div>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-5 pl-16 pr-6 text-on-surface focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary transition-all duration-300 placeholder:text-on-surface-variant/40" placeholder="Add a new task to 'Life'..." type="text"/>
+<div class="absolute inset-y-0 right-6 flex items-center">
+<span class="text-xs text-on-surface-variant font-label-caps border border-outline-variant px-2 py-1 rounded">⌘ K</span>
+</div>
+</div>
+<!-- Task List -->
+<section class="flex-grow overflow-y-auto scrollbar-hide space-y-4 pb-12">
+<!-- Task Card 1 -->
+<div class="group bg-[#232323] p-6 rounded-2xl border border-outline-variant hover:border-tertiary/50 transition-all duration-300 flex items-center gap-6 cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant group-hover:border-tertiary flex items-center justify-center transition-colors">
+<div class="w-3 h-3 rounded-full bg-tertiary opacity-0 group-hover:opacity-20"></div>
+</div>
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="font-title-lg text-on-surface">Call Max about weekend trip</h3>
+<span class="bg-tertiary/10 text-tertiary px-3 py-1 rounded-full text-[10px] font-label-caps tracking-wider">#REMINDER</span>
+</div>
+<p class="text-body-sm text-on-surface-variant opacity-60">Today at 4:30 PM</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</span>
+</div>
+<!-- Task Card 2 -->
+<div class="group bg-[#232323] p-6 rounded-2xl border border-outline-variant hover:border-tertiary/50 transition-all duration-300 flex items-center gap-6 cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant group-hover:border-tertiary flex items-center justify-center transition-colors"></div>
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="font-title-lg text-on-surface">Go to Gym</h3>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-label-caps tracking-wider">#HEALTH</span>
+</div>
+<p class="text-body-sm text-on-surface-variant opacity-60">6:00 PM - Chest &amp; Shoulders</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</span>
+</div>
+<!-- Task Card 3 -->
+<div class="group bg-[#232323] p-6 rounded-2xl border border-outline-variant hover:border-tertiary/50 transition-all duration-300 flex items-center gap-6 cursor-pointer">
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant group-hover:border-tertiary flex items-center justify-center transition-colors"></div>
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="font-title-lg text-on-surface">Pick up dry cleaning</h3>
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-label-caps tracking-wider">#ERRANDS</span>
+</div>
+<p class="text-body-sm text-on-surface-variant opacity-60">Friday, Oct 25</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</span>
+</div>
+<!-- Task Card 4 -->
+<div class="group bg-[#232323] p-6 rounded-2xl border border-outline-variant hover:border-tertiary/50 transition-all duration-300 flex items-center gap-6 cursor-pointer opacity-80">
+<div class="w-6 h-6 rounded-full border-2 border-tertiary flex items-center justify-center transition-colors bg-tertiary">
+<span class="material-symbols-outlined text-black text-[16px] font-bold">check</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="font-title-lg text-on-surface-variant line-through">Buy birthday gift for Sarah</h3>
+<span class="bg-surface-variant text-on-surface-variant opacity-40 px-3 py-1 rounded-full text-[10px] font-label-caps tracking-wider">#LIFE</span>
+</div>
+<p class="text-body-sm text-on-surface-variant opacity-40">Completed</p>
+</div>
+</div>
+</section>
+</main>
+<!-- RIGHT SIDEBAR (25%) -->
+<aside class="w-1/4 h-screen bg-surface-container-low border-l border-outline-variant flex flex-col px-8 py-12">
+<!-- Mini Calendar -->
+<div class="mb-12">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-headline-md text-title-lg text-on-surface">Calendar</h4>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-y-4 text-center">
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Mo</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Tu</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">We</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Th</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Fr</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Sa</span>
+<span class="text-[10px] font-label-caps text-on-surface-variant opacity-40 uppercase">Su</span>
+<!-- Days -->
+<span class="text-body-sm text-on-surface-variant opacity-40">21</span>
+<span class="text-body-sm text-on-surface-variant opacity-40">22</span>
+<span class="text-body-sm text-on-surface-variant opacity-40">23</span>
+<span class="text-body-sm text-on-surface relative flex items-center justify-center">
+<span class="absolute w-8 h-8 rounded-full bg-tertiary -z-10"></span>
+<span class="font-bold text-black">24</span>
+</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">25</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">26</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">27</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">28</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">29</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">30</span>
+<span class="text-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer">31</span>
+</div>
+</div>
+<!-- Sorting Widget -->
+<div class="mb-12">
+<h4 class="font-headline-md text-title-lg text-on-surface mb-6">Sort Method</h4>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant text-sm font-medium hover:text-on-surface hover:border-on-surface-variant transition-all">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>Date</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant text-sm font-medium hover:text-on-surface hover:border-on-surface-variant transition-all">
+<span class="material-symbols-outlined text-[18px]">sort_by_alpha</span>
+<span>Name</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-tertiary text-black text-sm font-bold active-glow col-span-2 shadow-lg">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">priority_high</span>
+<span>Priority</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-3 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface-variant text-sm font-medium hover:text-on-surface hover:border-on-surface-variant transition-all">
+<span class="material-symbols-outlined text-[18px]">label</span>
+<span>Tag</span>
+</button>
+</div>
+</div>
+<!-- Mood Visualization Area (Atmospheric Asset) -->
+<div class="mt-auto relative w-full h-48 rounded-2xl overflow-hidden border border-outline-variant group">
+<div class="absolute inset-0 z-10 p-6 flex flex-col justify-end bg-gradient-to-t from-black/80 to-transparent">
+<p class="text-[10px] font-label-caps text-tertiary mb-1">PERSONAL INSIGHT</p>
+<p class="text-body-sm font-bold text-white">Focus is 22% higher today</p>
+</div>
+<!-- Decorative Placeholder -->
+<div class="absolute inset-0 bg-[#1D1D1D] flex items-center justify-center">
+<div class="w-full h-full opacity-20 group-hover:opacity-40 transition-opacity">
+<div class="w-full h-full bg-cover bg-center" data-alt="A sophisticated abstract 3D visualization of data flow, pulsing golden neon lines weaving through a dark charcoal digital space, premium technological aesthetic, high-contrast, moody atmosphere." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAeYvxq_xTrtLK7KV9rVjJauliRG5xuOjYkcMmriXyLVJoGNwUDh5DOKglDRcQwnRlE4kzrbMMUjRFRFpFnSDgv8rDpvd1rPxcaV_UqESKmZObp_qGSIg2WJEUlQ7ImLP27OPzm_tRJAtPQI49x_Fa3g2kTnxMK2Un4twEwLLFOmECxLQBSgAZaVoNWJ6tkvLAAi2iIhT4maAX66MfCSLAeHxXIUxxjSQb8vEodY7SmmW1T8XKtII58')"></div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<script>
+    // Update date dynamically
+    const dateOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', dateOptions);
+
+    // Simple entrance animations using vanilla JS classes
+    document.addEventListener('DOMContentLoaded', () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('opacity-100');
+            entry.target.classList.remove('translate-y-4');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.animate-on-scroll').forEach(el => {
+        el.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-700');
+        observer.observe(el);
+      });
+    });
+  </script>
+<style>
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+      animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</body></html>
