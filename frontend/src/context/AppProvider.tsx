@@ -6,9 +6,10 @@ import {
   INITIAL_TASKS,
   INITIAL_CALENDAR_EVENTS,
 } from '../data'
-import type { Task, Project, CalendarEvent, AppSettings, UserProfile } from '../types'
+import type { Task, Project, CalendarEvent, AppSettings, UserProfile, Notification } from '../types'
 import * as authService from '../services/authService'
 import * as projectService from '../services/projectService'
+import * as notificationService from '../services/notificationService'
 
 interface AppContextValue {
   user: UserProfile
@@ -21,6 +22,11 @@ interface AppContextValue {
   setEvents: React.Dispatch<React.SetStateAction<CalendarEvent[]>>
   settings: AppSettings
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>
+  notifications: Notification[]
+  unreadCount: number
+  refreshNotifications: () => Promise<void>
+  markAsRead: (id: string) => Promise<void>
+  markAllAsRead: () => Promise<void>
   isAuthenticated: boolean
   isAuthLoading: boolean
   login: (email: string, password: string) => Promise<void>
@@ -54,6 +60,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS)
   const [events, setEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS)
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const refreshNotifications = useCallback(async () => {
+    try {
+      await notificationService.generateNotifications()
+      const [data, count] = await Promise.all([
+        notificationService.getNotifications({ limit: 50 }),
+        notificationService.getUnreadCount(),
+      ])
+      setNotifications(data.notifications.map(notificationService.mapNotification))
+      setUnreadCount(count)
+    } catch {
+      // silently fail
+    }
+  }, [])
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationService.markAsRead(id)
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch {
+      // silently fail
+    }
+  }, [])
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationService.markAllAsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setUnreadCount(0)
+    } catch {
+      // silently fail
+    }
+  }, [])
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -81,6 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setUser(mapBackendUser(backendUser))
         setIsAuthenticated(true)
         await fetchProjects()
+        await refreshNotifications()
       })
       .catch(async () => {
         const storedRefreshToken = localStorage.getItem('refreshToken')
@@ -92,6 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setUser(mapBackendUser(refreshed.user))
             setIsAuthenticated(true)
             await fetchProjects()
+            await refreshNotifications()
           } catch {
             localStorage.removeItem('accessToken')
             localStorage.removeItem('refreshToken')
@@ -114,7 +158,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(mapBackendUser(response.user))
     setIsAuthenticated(true)
     await fetchProjects()
-  }, [fetchProjects])
+    await refreshNotifications()
+  }, [fetchProjects, refreshNotifications])
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const response = await authService.register(name, email, password)
@@ -123,7 +168,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(mapBackendUser(response.user))
     setIsAuthenticated(true)
     await fetchProjects()
-  }, [fetchProjects])
+    await refreshNotifications()
+  }, [fetchProjects, refreshNotifications])
 
   const logout = useCallback(async () => {
     const storedRefreshToken = localStorage.getItem('refreshToken')
@@ -153,6 +199,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setEvents,
         settings,
         setSettings,
+        notifications,
+        unreadCount,
+        refreshNotifications,
+        markAsRead,
+        markAllAsRead,
         isAuthenticated,
         isAuthLoading,
         login,

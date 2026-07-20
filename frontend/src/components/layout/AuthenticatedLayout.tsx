@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppProvider'
 import Sidebar from '../Sidebar'
 
 export default function AuthenticatedLayout() {
-  const { user, projects, settings, logout } = useApp()
+  const { user, projects, settings, logout, notifications, unreadCount, markAsRead, markAllAsRead } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -38,6 +38,10 @@ export default function AuthenticatedLayout() {
         projects={projects}
         settings={settings}
         onLogout={logout}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
       />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">

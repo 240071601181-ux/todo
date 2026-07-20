@@ -133,7 +133,14 @@ export async function toggleTask(userId: string, taskId: string) {
     throw new TaskError('Forbidden', 403)
   }
 
-  return taskRepository.toggleComplete(taskId)
+  const updated = await taskRepository.toggleComplete(taskId)
+
+  if (updated.completed) {
+    const { generateCompletedNotification } = await import('./notificationService.js')
+    await generateCompletedNotification(userId, taskId, task.title).catch(() => {})
+  }
+
+  return updated
 }
 
 export async function archiveTask(userId: string, taskId: string) {

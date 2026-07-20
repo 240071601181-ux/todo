@@ -12,11 +12,14 @@ import {
   Activity, 
   CheckSquare, 
   Star,
-  Users
+  Users,
+  BarChart3,
+  Layers
 } from 'lucide-react';
 import { Task, Project, UserProfile, CalendarEvent, AppSettings } from '../types';
 import { toggleTask as apiToggleTask } from '../services/taskService';
 import type { ActivityItem } from '../services/activityService';
+import type { CategoryBreakdownItem } from '../services/analyticsService';
 
 interface DashboardScreenProps {
   user: UserProfile;
@@ -27,6 +30,8 @@ interface DashboardScreenProps {
   events: CalendarEvent[];
   settings: AppSettings;
   activities: ActivityItem[];
+  monthlyCompletedCount: number[];
+  categoryBreakdown: CategoryBreakdownItem[];
   setActiveTab: (tab: string) => void;
   setSelectedTaskId: (id: string | null) => void;
 }
@@ -40,10 +45,13 @@ export default function DashboardScreen({
   events, 
   settings, 
   activities,
+  monthlyCompletedCount,
+  categoryBreakdown,
   setActiveTab,
   setSelectedTaskId
 }: DashboardScreenProps) {
   const [claimedBoost, setClaimedBoost] = useState(false);
+  const [chartMode, setChartMode] = useState<'weekly' | 'monthly'>('weekly');
 
   // Derive metrics
   const todayDateStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -66,9 +74,10 @@ export default function DashboardScreen({
     return completedTodayCount * 25 + user.streakDays * 5;
   }, [completedTodayCount, user.streakDays]);
 
-  const maxTasksInWeek = useMemo(() => {
-    return Math.max(...user.weeklyTaskCount, 1);
-  }, [user.weeklyTaskCount]);
+  const maxTasksInChart = useMemo(() => {
+    const data = chartMode === 'weekly' ? user.weeklyTaskCount : monthlyCompletedCount;
+    return Math.max(...data, 1);
+  }, [user.weeklyTaskCount, monthlyCompletedCount, chartMode]);
 
   const productivityTrendColor = user.productivityTrend >= 0 ? 'text-emerald-400' : 'text-red-400';
 
@@ -294,14 +303,40 @@ export default function DashboardScreen({
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-500" style={{ color: activeAccent }} /> Weekly Task Throughput
+                <Activity className="w-4 h-4 text-blue-500" style={{ color: activeAccent }} /> Task Throughput
               </h3>
-              <p className="text-[10px] text-slate-500 font-mono uppercase mt-0.5">Tasks resolved during previous 7 intervals</p>
+              <p className="text-[10px] text-slate-500 font-mono uppercase mt-0.5">
+                {chartMode === 'weekly' ? 'Tasks resolved during previous 7 intervals' : 'Tasks resolved per month (12 months)'}
+              </p>
             </div>
             
-            <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800/40">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: activeAccent }}></span>
-              <span className="text-[10px] font-mono text-slate-400 uppercase">Resolved tasks</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-slate-900/80 p-0.5 rounded-lg border border-slate-800/40">
+                <button
+                  onClick={() => setChartMode('weekly')}
+                  className={`px-2 py-1 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                    chartMode === 'weekly'
+                      ? 'bg-slate-800 text-slate-200'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <BarChart3 className="w-3 h-3 inline-block mr-1" />Weekly
+                </button>
+                <button
+                  onClick={() => setChartMode('monthly')}
+                  className={`px-2 py-1 rounded text-[10px] font-mono transition-all cursor-pointer ${
+                    chartMode === 'monthly'
+                      ? 'bg-slate-800 text-slate-200'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Layers className="w-3 h-3 inline-block mr-1" />Monthly
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800/40">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: activeAccent }}></span>
+                <span className="text-[10px] font-mono text-slate-400 uppercase">Resolved tasks</span>
+              </div>
             </div>
           </div>
 
@@ -316,33 +351,32 @@ export default function DashboardScreen({
 
             {/* Interactive Bars with dynamic heights */}
             <div className="flex items-end justify-between h-44 px-4 z-10">
-              {user.weeklyTaskCount.map((count, idx) => {
-                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                const pct = (count / maxTasksInWeek) * 100;
+              {(chartMode === 'weekly' ? user.weeklyTaskCount : monthlyCompletedCount).map((count, idx) => {
+                const pct = (count / maxTasksInChart) * 100;
+                const labels = chartMode === 'weekly'
+                  ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                  : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 return (
                   <div key={idx} className="flex flex-col items-center gap-2 flex-1 group">
                     <div className="relative w-full flex justify-center">
-                      {/* Tooltip on hover */}
                       <span className="absolute -top-8 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-white opacity-0 group-hover:opacity-100 transition-all shadow-md z-20 pointer-events-none">
                         {count} tasks
                       </span>
-                      {/* Visual Bar */}
                       <motion.div 
                         initial={{ height: 0 }}
                         animate={{ height: `${pct}%` }}
                         transition={{ duration: 0.8, delay: idx * 0.05 }}
-                        className="w-8 rounded-t-lg relative transition-all group-hover:brightness-110"
+                        className="w-5 md:w-8 rounded-t-lg relative transition-all group-hover:brightness-110"
                         style={{ 
                           backgroundColor: activeAccent,
                           boxShadow: `0 4px 15px ${activeAccent}1a`
                         }}
                       >
-                        {/* Overlay inner highlight */}
                         <div className="absolute inset-x-0 top-0 h-1 bg-white/20 rounded-t-lg"></div>
                       </motion.div>
                     </div>
                     <span className="text-[10px] font-mono text-slate-500 group-hover:text-slate-300 transition-colors">
-                      {days[idx]}
+                      {labels[idx]}
                     </span>
                   </div>
                 );
@@ -568,6 +602,38 @@ export default function DashboardScreen({
           </div>
         </div>
       </div>
+      
+      {/* Category Breakdown */}
+      {categoryBreakdown.length > 0 && (
+      <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+              <Layers className="w-4 h-4" style={{ color: activeAccent }} /> Category Breakdown
+            </h3>
+            <p className="text-[10px] text-slate-500 font-mono uppercase mt-0.5">Task distribution across categories</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {categoryBreakdown.map((cat) => (
+            <div key={cat.id} className="p-3 bg-slate-900/40 border border-slate-800/40 rounded-xl hover:bg-slate-900/60 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-slate-200 truncate">{cat.name}</span>
+                <span className="text-[11px] font-mono text-slate-400">{cat.count} tasks</span>
+              </div>
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${cat.percentage}%`, backgroundColor: activeAccent }}
+                />
+              </div>
+              <span className="text-[9px] font-mono text-slate-500 mt-1 block">{cat.percentage}% of total</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      )}
 
       {/* Activity Feed */}
       <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl">

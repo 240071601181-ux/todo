@@ -17,6 +17,8 @@ const EMPTY_ANALYTICS: analyticsService.BackendAnalytics = {
   overdue: 0,
   mostActiveCategory: null,
   weeklyCompletedCount: [0, 0, 0, 0, 0, 0, 0],
+  monthlyCompletedCount: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  categoryBreakdown: [],
   productivityScore: 0,
   completedToday: 0,
   xp: 0,
@@ -74,6 +76,8 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState(ctxProjects)
   const [events, setEvents] = useState(ctxEvents)
   const [activities, setActivities] = useState<activityService.ActivityItem[]>([])
+  const [monthlyCompletedCount, setMonthlyCompletedCount] = useState<number[]>([])
+  const [categoryBreakdown, setCategoryBreakdown] = useState<analyticsService.CategoryBreakdownItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -132,6 +136,8 @@ export default function DashboardPage() {
         setProjects(mappedProjects)
         setEvents(mergedEvents)
         setActivities(rawActivities)
+        setMonthlyCompletedCount(analytics.monthlyCompletedCount)
+        setCategoryBreakdown(analytics.categoryBreakdown)
         setUser(prev => ({
           ...ctxUser,
           productivityScore: analytics.productivityScore,
@@ -168,6 +174,8 @@ export default function DashboardPage() {
       events={events}
       settings={settings}
       activities={activities}
+      monthlyCompletedCount={monthlyCompletedCount}
+      categoryBreakdown={categoryBreakdown}
       setActiveTab={(tab) => {
         if (tab.startsWith('project-detail:')) {
           const projId = tab.split(':')[1]

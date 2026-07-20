@@ -11,9 +11,11 @@ import {
   LogOut, 
   Zap, 
   TrendingUp,
-  Cpu
+  Cpu,
+  Bell
 } from 'lucide-react';
-import { AppSettings, UserProfile, Project } from '../types';
+import type { AppSettings, UserProfile, Project, Notification } from '../types';
+import NotificationBell from './NotificationBell';
 
 interface SidebarProps {
   activeTab: string;
@@ -22,6 +24,10 @@ interface SidebarProps {
   projects: Project[];
   settings: AppSettings;
   onLogout: () => void;
+  notifications: Notification[];
+  unreadCount: number;
+  onMarkAsRead: (id: string) => void;
+  onMarkAllAsRead: () => void;
 }
 
 export default function Sidebar({ 
@@ -30,7 +36,11 @@ export default function Sidebar({
   user, 
   projects, 
   settings, 
-  onLogout 
+  onLogout,
+  notifications,
+  unreadCount,
+  onMarkAsRead,
+  onMarkAllAsRead,
 }: SidebarProps) {
   
   const navItems = [
@@ -77,7 +87,7 @@ export default function Sidebar({
           <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-900 border border-slate-800/80">
             <Cpu className="w-4 h-4 text-slate-400 animate-pulse" style={{ color: getAccentColorHex() }} />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <span className="font-display font-bold tracking-tight text-white block text-sm">
               FAST<span style={{ color: getAccentColorHex() }}>ODO</span>
             </span>
@@ -85,6 +95,14 @@ export default function Sidebar({
               VELOCITY CORE
             </span>
           </div>
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={onMarkAsRead}
+            onMarkAllAsRead={onMarkAllAsRead}
+            onViewAll={() => setActiveTab('notifications')}
+            accentColor={settings.accentColor}
+          />
         </div>
 
         {/* Level Progression Indicator */}

@@ -185,3 +185,19 @@ export const updateProjectSchema = z.object({
 export const projectParamsSchema = z.object({
   id: z.string().uuid('Invalid project ID'),
 })
+
+// Notification schemas
+export const notificationParamsSchema = z.object({
+  id: z.string().uuid('Invalid notification ID'),
+})
+
+export const notificationListQuerySchema = z.object({
+  page: z
+    .union([z.number(), z.string().transform(v => parseInt(v))])
+    .pipe(z.number().int().min(1))
+    .optional(),
+  limit: z
+    .union([z.number(), z.string().transform(v => parseInt(v))])
+    .pipe(z.number().int().min(1).max(100))
+    .optional(),
+})

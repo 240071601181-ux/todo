@@ -1,5 +1,12 @@
 import api from '../lib/api'
 
+export interface CategoryBreakdownItem {
+  id: string
+  name: string
+  count: number
+  percentage: number
+}
+
 export interface BackendAnalytics {
   completedTasks: number
   pendingTasks: number
@@ -8,6 +15,8 @@ export interface BackendAnalytics {
   overdue: number
   mostActiveCategory: { id: string; name: string; count: number } | null
   weeklyCompletedCount: number[]
+  monthlyCompletedCount: number[]
+  categoryBreakdown: CategoryBreakdownItem[]
   productivityScore: number
   completedToday: number
   xp: number

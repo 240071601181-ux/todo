@@ -15,6 +15,7 @@ import categoryRoutes from './routes/categoryRoutes.js'
 import tagRoutes from './routes/tagRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
 import calendarEventRoutes from './routes/calendarEventRoutes.js'
+import notificationRoutes from './routes/notificationRoutes.js'
 
 const app = express()
 
@@ -36,6 +37,7 @@ app.use('/api/categories', globalLimiter, categoryRoutes)
 app.use('/api/tags', globalLimiter, tagRoutes)
 app.use('/api/projects', globalLimiter, projectRoutes)
 app.use('/api/calendar-events', globalLimiter, calendarEventRoutes)
+app.use('/api/notifications', globalLimiter, notificationRoutes)
 
 app.get('/api/health', (_req, res) => {
   res.json({

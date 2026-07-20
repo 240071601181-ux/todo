@@ -57,11 +57,29 @@ export async function updateProject(userId: string, projectId: string, input: Up
     ? (input.dueDate ? new Date(input.dueDate) : null)
     : undefined
 
-  return projectRepository.update(projectId, {
+  const updated = await projectRepository.update(projectId, {
     ...input,
     stakeholders: input.stakeholders as Prisma.InputJsonValue | undefined,
     dueDate,
   })
+
+  const changedFields: string[] = []
+  if (input.name && input.name !== existing.name) changedFields.push(`renamed to "${input.name}"`)
+  if (input.status && input.status !== existing.status) changedFields.push(`status changed to ${input.status}`)
+  if (input.progress !== undefined && input.progress !== existing.progress) changedFields.push(`progress updated to ${input.progress}%`)
+  if (input.stakeholders) {
+    const existingCount = (existing.stakeholders as Array<unknown>).length
+    const newCount = input.stakeholders.length
+    if (newCount > existingCount) changedFields.push(`${newCount - existingCount} member(s) added`)
+    if (newCount < existingCount) changedFields.push(`${existingCount - newCount} member(s) removed`)
+  }
+
+  if (changedFields.length > 0) {
+    const { generateProjectUpdateNotification } = await import('./notificationService.js')
+    await generateProjectUpdateNotification(userId, projectId, updated.name, changedFields.join('; ')).catch(() => {})
+  }
+
+  return updated
 }
 
 export async function deleteProject(userId: string, projectId: string) {

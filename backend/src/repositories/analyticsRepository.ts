@@ -1,5 +1,12 @@
 import prisma from '../utils/prisma.js'
 
+export interface CategoryBreakdownItem {
+  id: string
+  name: string
+  count: number
+  percentage: number
+}
+
 export interface AnalyticsResult {
   completedTasks: number
   pendingTasks: number
@@ -8,6 +15,8 @@ export interface AnalyticsResult {
   overdue: number
   mostActiveCategory: { id: string; name: string; count: number } | null
   weeklyCompletedCount: number[]
+  monthlyCompletedCount: number[]
+  categoryBreakdown: CategoryBreakdownItem[]
   productivityScore: number
   completedToday: number
   xp: number
@@ -32,7 +41,9 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
   const lastWeekStart = new Date(monday.getTime() - 7 * 86_400_000)
   const lastWeekEnd = new Date(monday.getTime())
 
-  const [totalTasks, completedTasks, dueToday, overdue, categoryStats, completedThisWeek, completedToday, lastWeekCompletions, allCompletedDates] =
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+
+  const [totalTasks, completedTasks, dueToday, overdue, topCategoryStats, completedThisWeek, completedToday, lastWeekCompletions, allCompletedDates, monthlyTasks, allCategoryStats] =
     await Promise.all([
       prisma.task.count({ where: { userId } }),
       prisma.task.count({ where: { userId, completed: true } }),
@@ -64,6 +75,16 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
         select: { updatedAt: true },
         orderBy: { updatedAt: 'desc' },
       }),
+      prisma.task.findMany({
+        where: { userId, completed: true, updatedAt: { gte: twelveMonthsAgo } },
+        select: { updatedAt: true },
+      }),
+      prisma.task.groupBy({
+        by: ['categoryId'],
+        where: { userId, categoryId: { not: null } },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+      }),
     ])
 
   const pendingTasks = totalTasks - completedTasks
@@ -90,17 +111,48 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
     ? Math.round(((thisWeekTotal - lastWeekCompletions) / lastWeekCompletions) * 100)
     : thisWeekTotal > 0 ? 100 : 0
 
+  const monthlyCompletedCount = Array(12).fill(0) as number[]
+  for (const task of monthlyTasks) {
+    const monthDiff = (now.getFullYear() - task.updatedAt.getFullYear()) * 12 + now.getMonth() - task.updatedAt.getMonth()
+    const idx = 11 - monthDiff
+    if (idx >= 0 && idx < 12) {
+      monthlyCompletedCount[idx]++
+    }
+  }
+
   let mostActiveCategory: { id: string; name: string; count: number } | null = null
-  if (categoryStats.length > 0 && categoryStats[0].categoryId) {
+  if (topCategoryStats.length > 0 && topCategoryStats[0].categoryId) {
     const category = await prisma.category.findUnique({
-      where: { id: categoryStats[0].categoryId },
+      where: { id: topCategoryStats[0].categoryId },
       select: { id: true, name: true },
     })
     if (category) {
       mostActiveCategory = {
         id: category.id,
         name: category.name,
-        count: categoryStats[0]._count.id,
+        count: topCategoryStats[0]._count.id,
+      }
+    }
+  }
+
+  const categoryBreakdown: CategoryBreakdownItem[] = []
+  const categoryIds = allCategoryStats.map(c => c.categoryId).filter(Boolean) as string[]
+  if (categoryIds.length > 0) {
+    const categories = await prisma.category.findMany({
+      where: { id: { in: categoryIds } },
+      select: { id: true, name: true },
+    })
+    const categoryMap = new Map(categories.map(c => [c.id, c.name]))
+    const categoryTotal = allCategoryStats.reduce((sum, c) => sum + c._count.id, 0)
+    for (const stat of allCategoryStats) {
+      if (stat.categoryId) {
+        const name = categoryMap.get(stat.categoryId) ?? 'Uncategorized'
+        categoryBreakdown.push({
+          id: stat.categoryId,
+          name,
+          count: stat._count.id,
+          percentage: categoryTotal > 0 ? Math.round((stat._count.id / categoryTotal) * 100) : 0,
+        })
       }
     }
   }
@@ -134,6 +186,8 @@ export async function getAnalytics(userId: string): Promise<AnalyticsResult> {
     overdue,
     mostActiveCategory,
     weeklyCompletedCount,
+    monthlyCompletedCount,
+    categoryBreakdown,
     productivityScore,
     completedToday,
     xp,

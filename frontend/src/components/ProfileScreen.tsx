@@ -22,9 +22,11 @@ interface ProfileScreenProps {
   settings: AppSettings;
   onLogout: () => void;
   accentColor: string;
+  weeklyTaskTotal?: number;
+  projectCount?: number;
 }
 
-export default function ProfileScreen({ user, settings, onLogout, accentColor }: ProfileScreenProps) {
+export default function ProfileScreen({ user, settings, onLogout, accentColor, weeklyTaskTotal, projectCount }: ProfileScreenProps) {
   
   const [notifReports, setNotifReports] = useState(true);
   const [telemetry, setTelemetry] = useState(false);
@@ -187,11 +189,11 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor }:
               </div>
               <div className="p-3 bg-slate-900/40 border border-slate-800/40 rounded-xl">
                 <span className="text-[10px] font-mono text-slate-500 uppercase block">Completed Tasks Week</span>
-                <span className="text-xl font-bold font-display text-white mt-1 block">59 Tasks</span>
+                <span className="text-xl font-bold font-display text-white mt-1 block">{weeklyTaskTotal ?? user.weeklyTaskCount.reduce((a, b) => a + b, 0)} Tasks</span>
               </div>
               <div className="p-3 bg-slate-900/40 border border-slate-800/40 rounded-xl">
                 <span className="text-[10px] font-mono text-slate-500 uppercase block">Active Sprint Load</span>
-                <span className="text-xl font-bold font-display text-white mt-1 block">3 projects</span>
+                <span className="text-xl font-bold font-display text-white mt-1 block">{projectCount ?? 3} projects</span>
               </div>
             </div>
           </div>

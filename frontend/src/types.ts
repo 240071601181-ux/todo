@@ -88,6 +88,16 @@ export interface UserProfile {
 
 export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
 
+export interface Notification {
+  id: string;
+  type: 'due_today' | 'overdue' | 'completed' | 'project_update';
+  title: string;
+  message: string;
+  relatedId?: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
