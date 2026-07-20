@@ -1,5 +1,11 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import compression from 'compression'
+import { globalLimiter, authLimiter } from './middleware/rateLimiter.js'
+import { requestLogger } from './middleware/logger.js'
+import { errorHandler } from './middleware/errorHandler.js'
+import { responseCache } from './middleware/cache.js'
 import authRoutes from './routes/authRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
 import listRoutes from './routes/listRoutes.js'
@@ -7,16 +13,28 @@ import analyticsRoutes from './routes/analyticsRoutes.js'
 
 const app = express()
 
-app.use(cors())
-app.use(express.json())
+app.use(helmet())
+app.use(compression())
+app.use(cors({
+  origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  credentials: true,
+}))
+app.use(express.json({ limit: '10kb' }))
+app.use(requestLogger)
 
-app.use('/api/auth', authRoutes)
-app.use('/api/tasks', taskRoutes)
-app.use('/api/lists', listRoutes)
-app.use('/api/analytics', analyticsRoutes)
+app.use('/api/auth', authLimiter, authRoutes)
+app.use('/api/tasks', globalLimiter, taskRoutes)
+app.use('/api/lists', globalLimiter, listRoutes)
+app.use('/api/analytics', globalLimiter, responseCache(120), analyticsRoutes)
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  })
 })
+
+app.use(errorHandler)
 
 export default app
