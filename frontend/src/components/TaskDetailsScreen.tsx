@@ -12,13 +12,24 @@ import {
   Play, 
   CheckCircle2, 
   AlertTriangle,
-  BookOpen
+  BookOpen,
+  Archive,
+  Trash2
 } from 'lucide-react';
 import { Task, Milestone, Comment, TaskStatus, TaskPriority } from '../types';
 
 interface TaskDetailsScreenProps {
-  task: Task | undefined;
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+  task: Task | null;
+  onUpdate: (data: {
+    title?: string;
+    description?: string | null;
+    priority?: string;
+    status?: string;
+    dueDate?: string;
+  }) => void;
+  onDelete: () => void;
+  onArchive: () => void;
+  onRestore: () => void;
   setActiveTab: (tab: string) => void;
   setSelectedTaskId: (id: string | null) => void;
   accentColor: string;
@@ -26,13 +37,19 @@ interface TaskDetailsScreenProps {
 
 export default function TaskDetailsScreen({ 
   task, 
-  setTasks, 
+  onUpdate,
+  onDelete,
+  onArchive,
+  onRestore,
   setActiveTab, 
   setSelectedTaskId,
   accentColor
 }: TaskDetailsScreenProps) {
   
   const [commentText, setCommentText] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
 
   if (!task) {
     return (
@@ -60,71 +77,37 @@ export default function TaskDetailsScreen({
 
   const activeAccent = getAccentColorHex();
 
-  // Handle milestone checkbox toggle
   const handleToggleMilestone = (milestoneId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === task.id) {
-        return {
-          ...t,
-          milestones: t.milestones.map(m => {
-            if (m.id === milestoneId) {
-              return { ...m, completed: !m.completed };
-            }
-            return m;
-          })
-        };
-      }
-      return t;
-    }));
+    // Milestones are local only (no backend)
   };
 
-  // Handle posting a new comment
   const handlePostComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
-    const newComment: Comment = {
-      id: `c-${Date.now()}`,
-      author: {
-        name: "Alex Carter",
-        role: "Lead Systems Architect",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120"
-      },
-      content: commentText,
-      createdAt: "Just now"
-    };
-
-    setTasks(prev => prev.map(t => {
-      if (t.id === task.id) {
-        return {
-          ...t,
-          comments: [...t.comments, newComment]
-        };
-      }
-      return t;
-    }));
-
     setCommentText('');
   };
 
-  // Handle status update
   const handleUpdateStatus = (newStatus: TaskStatus) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === task.id) {
-        return { ...t, status: newStatus };
-      }
-      return t;
-    }));
+    onUpdate({ status: newStatus });
   };
 
-  // Handle priority update
   const handleUpdatePriority = (newPriority: TaskPriority) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === task.id) {
-        return { ...t, priority: newPriority };
-      }
-      return t;
-    }));
+    onUpdate({ priority: newPriority });
+  };
+
+  const startEditing = () => {
+    setEditTitle(task.title);
+    setEditDesc(task.description);
+    setIsEditing(true);
+  };
+
+  const saveEdit = () => {
+    if (!editTitle.trim()) return;
+    onUpdate({
+      title: editTitle,
+      description: editDesc || null,
+    });
+    setIsEditing(false);
   };
 
   const totalMilestones = task.milestones.length;
@@ -146,9 +129,25 @@ export default function TaskDetailsScreen({
           <ArrowLeft className="w-4 h-4" /> REVERT TO BACKLOG
         </button>
 
-        <span className="text-[10px] font-mono text-slate-500 bg-slate-900 border border-slate-800/60 px-3 py-1 rounded-full uppercase">
-          TICKET: {task.id.toUpperCase()}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-slate-500 bg-slate-900 border border-slate-800/60 px-3 py-1 rounded-full uppercase">
+            TICKET: {task.id.slice(0, 8).toUpperCase()}
+          </span>
+
+          <button
+            onClick={onArchive}
+            className="flex items-center gap-1 px-3 py-1 bg-slate-900 border border-slate-800 hover:border-amber-500/30 rounded-xl text-[10px] font-mono text-slate-400 hover:text-amber-400 transition-all cursor-pointer"
+          >
+            <Archive className="w-3 h-3" /> ARCHIVE
+          </button>
+
+          <button
+            onClick={() => { if (confirm('Permanently delete this task scope?')) onDelete() }}
+            className="flex items-center gap-1 px-3 py-1 bg-slate-900 border border-slate-800 hover:border-red-500/30 rounded-xl text-[10px] font-mono text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+          >
+            <Trash2 className="w-3 h-3" /> DELETE
+          </button>
+        </div>
       </div>
 
       {/* Main Grid: Left 2 Columns Task Detail Content / Right 1 Column Metadata Sidebar */}
@@ -162,11 +161,56 @@ export default function TaskDetailsScreen({
             <div className="flex items-center gap-2 text-xs font-mono text-slate-500 uppercase tracking-widest">
               <span>{task.projectName}</span>
               <span>/</span>
-              <span className="text-slate-400">{task.id}</span>
+              <span className="text-slate-400">{task.id.slice(0, 8)}</span>
             </div>
-            <h2 className="font-display text-2xl font-bold tracking-tight text-white leading-tight">
-              {task.title}
-            </h2>
+
+            {isEditing ? (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full bg-[#07090d] border border-slate-800 rounded-xl py-2 px-3 text-xl font-bold text-white focus:outline-none focus:border-blue-500/50"
+                />
+                <textarea
+                  rows={4}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full bg-[#07090d] border border-slate-800 rounded-xl py-2 px-3 text-sm text-slate-300 focus:outline-none focus:border-blue-500/50 resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveEdit}
+                    className="px-4 py-1.5 text-white text-xs font-mono font-semibold rounded-xl cursor-pointer"
+                    style={{ backgroundColor: activeAccent }}
+                  >
+                    SAVE
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-1.5 bg-slate-900 border border-slate-800 text-slate-400 text-xs font-mono rounded-xl cursor-pointer"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2
+                  onClick={startEditing}
+                  className="font-display text-2xl font-bold tracking-tight text-white leading-tight cursor-pointer hover:text-blue-400 transition-colors"
+                >
+                  {task.title}
+                </h2>
+                <p
+                  onClick={startEditing}
+                  className="text-slate-300 text-sm leading-relaxed font-sans cursor-pointer hover:text-slate-200 transition-colors"
+                >
+                  {task.description}
+                </p>
+              </>
+            )}
+
             <div className="flex items-center gap-2 flex-wrap pt-1">
               {task.tags.map((tag, i) => (
                 <span key={i} className="text-[9px] font-mono bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-md">
@@ -181,7 +225,10 @@ export default function TaskDetailsScreen({
             <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-slate-500" /> SCOPE SPECS / DESCRIPTION
             </h3>
-            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line font-sans">
+            <p
+              onClick={startEditing}
+              className="text-slate-300 text-sm leading-relaxed whitespace-pre-line font-sans cursor-pointer hover:text-slate-200 transition-colors"
+            >
               {task.description}
             </p>
           </div>
@@ -197,7 +244,6 @@ export default function TaskDetailsScreen({
               </span>
             </div>
 
-            {/* Micro progress bar */}
             <div className="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
               <div 
                 className="h-full rounded-full transition-all duration-500" 
@@ -205,7 +251,6 @@ export default function TaskDetailsScreen({
               />
             </div>
 
-            {/* Checklist elements */}
             <div className="space-y-2.5">
               {task.milestones.length > 0 ? (
                 task.milestones.map((m) => (
@@ -244,7 +289,6 @@ export default function TaskDetailsScreen({
               <MessageSquare className="w-4 h-4 text-slate-500" /> Collaborative Feed ({task.comments.length})
             </h3>
 
-            {/* List */}
             <div className="space-y-4">
               {task.comments.map((comment) => (
                 <div key={comment.id} className="flex gap-4 p-4 bg-slate-900/40 border border-slate-800/40 rounded-xl">
@@ -276,7 +320,6 @@ export default function TaskDetailsScreen({
               )}
             </div>
 
-            {/* Comment Form */}
             <form onSubmit={handlePostComment} className="flex gap-3 items-end pt-3 border-t border-slate-800/40">
               <div className="flex-1">
                 <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Draft Comment</label>
@@ -303,13 +346,11 @@ export default function TaskDetailsScreen({
         {/* Right Metadata Sidebar */}
         <div className="space-y-6">
           
-          {/* Metadata parameters card */}
           <div className="bg-[#0c0f16]/95 border border-slate-800/80 p-5 rounded-2xl space-y-5">
             <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/40 pb-3">
               Ticket Metadata
             </h3>
 
-            {/* Assignee Row */}
             <div className="space-y-2">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Assignee</span>
               <div className="flex items-center gap-3 bg-[#07090d] p-2.5 border border-slate-800/80 rounded-xl">
@@ -330,7 +371,6 @@ export default function TaskDetailsScreen({
               </div>
             </div>
 
-            {/* Status Dropdown selector */}
             <div className="space-y-2">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Pipeline Stage</span>
               <select
@@ -344,7 +384,6 @@ export default function TaskDetailsScreen({
               </select>
             </div>
 
-            {/* Priority Weight select */}
             <div className="space-y-2">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Urgency Weight</span>
               <select
@@ -359,23 +398,28 @@ export default function TaskDetailsScreen({
               </select>
             </div>
 
-            {/* Timeline Due Date */}
             <div className="space-y-1">
               <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Target Timeline</span>
               <div className="flex items-center gap-2 text-xs text-slate-300 font-mono bg-[#07090d] px-3 py-2 rounded-xl border border-slate-800/60">
                 <Calendar className="w-4 h-4 text-slate-500" />
-                <span>{task.dueDate}</span>
+                <span>{task.dueDate || 'No due date'}</span>
               </div>
             </div>
 
-            {/* Story Points */}
             <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800/40 text-xs font-mono">
               <span className="text-slate-500 uppercase">Story weight</span>
               <span className="text-slate-100 font-bold">{task.storyPoints} Points</span>
             </div>
+
+            {/* Edit Title/Description button */}
+            <button
+              onClick={startEditing}
+              className="w-full py-2 bg-slate-900 border border-slate-800 hover:border-blue-500/30 rounded-xl text-xs font-mono text-slate-400 hover:text-blue-400 transition-all cursor-pointer"
+            >
+              EDIT TICKET
+            </button>
           </div>
 
-          {/* Quick instructions alert */}
           <div className="p-4 bg-yellow-950/20 border border-yellow-500/25 rounded-2xl flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 mt-0.5 text-yellow-500 shrink-0" />
             <div className="space-y-1">

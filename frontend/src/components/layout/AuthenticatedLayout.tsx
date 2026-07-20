@@ -1,14 +1,9 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { useApp } from '../../context/AppProvider'
 import Sidebar from '../Sidebar'
-import type { ReactNode } from 'react'
 
-interface AuthenticatedLayoutProps {
-  children: ReactNode
-}
-
-export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
+export default function AuthenticatedLayout() {
   const { user, projects, settings, logout } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
@@ -55,7 +50,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
             transition={{ duration: 0.25 }}
             className="flex-1 flex flex-col h-full overflow-hidden"
           >
-            {children}
+            <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>

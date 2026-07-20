@@ -10,6 +10,8 @@ import authRoutes from './routes/authRoutes.js'
 import taskRoutes from './routes/taskRoutes.js'
 import listRoutes from './routes/listRoutes.js'
 import analyticsRoutes from './routes/analyticsRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import tagRoutes from './routes/tagRoutes.js'
 
 const app = express()
 
@@ -26,6 +28,8 @@ app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/tasks', globalLimiter, taskRoutes)
 app.use('/api/lists', globalLimiter, listRoutes)
 app.use('/api/analytics', globalLimiter, responseCache(120), analyticsRoutes)
+app.use('/api/categories', globalLimiter, categoryRoutes)
+app.use('/api/tags', globalLimiter, tagRoutes)
 
 app.get('/api/health', (_req, res) => {
   res.json({

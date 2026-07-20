@@ -14,118 +14,108 @@ import {
   UserPlus, 
   FolderPlus,
   HelpCircle,
-  Tag
+  Tag,
+  Archive,
+  RotateCcw,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { Task, Project, TaskStatus, TaskPriority } from '../types';
+import { Task, TaskStatus, TaskPriority } from '../types';
+import * as taskService from '../services/taskService';
 
 interface TasksScreenProps {
   tasks: Task[];
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-  projects: Project[];
+  selectedTaskId: string | null;
   setSelectedTaskId: (id: string | null) => void;
   setActiveTab: (tab: string) => void;
   accentColor: string;
+  // Search/filter/sort/pagination
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  filterProject: string;
+  onFilterProjectChange: (value: string) => void;
+  filterPriority: string;
+  onFilterPriorityChange: (value: string) => void;
+  filterStatus: string;
+  onFilterStatusChange: (value: string) => void;
+  showArchived: boolean;
+  onToggleArchived: () => void;
+  sortBy: string;
+  onSortChange: (field: string, order?: 'asc' | 'desc') => void;
+  page: number;
+  totalPages: number;
+  total: number;
+  onPageChange: (page: number) => void;
+  onRefresh: () => void;
+  // Actions
+  onToggleTask: (taskId: string, e: React.MouseEvent) => void;
+  onDeleteTask: (taskId: string, e: React.MouseEvent) => void;
+  onCreateTask: (data: {
+    title: string;
+    description: string;
+    priority: string;
+    listId: string;
+    tagIds?: string[];
+  }) => void;
+  onArchiveTask?: (taskId: string) => void;
 }
 
 export default function TasksScreen({ 
   tasks, 
   setTasks, 
-  projects, 
+  selectedTaskId,
   setSelectedTaskId, 
   setActiveTab,
-  accentColor
+  accentColor,
+  searchQuery,
+  onSearchChange,
+  filterProject,
+  onFilterProjectChange,
+  filterPriority,
+  onFilterPriorityChange,
+  filterStatus,
+  onFilterStatusChange,
+  showArchived,
+  onToggleArchived,
+  sortBy,
+  onSortChange,
+  page,
+  totalPages,
+  total,
+  onPageChange,
+  onRefresh,
+  onToggleTask,
+  onDeleteTask,
+  onCreateTask,
+  onArchiveTask,
 }: TasksScreenProps) {
   
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProjectFilter, setSelectedProjectFilter] = useState('all');
-  const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null);
 
   // New task form state
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newProjId, setNewProjId] = useState(projects[0]?.id || '');
+  const [newProjId, setNewProjId] = useState('');
   const [newPriority, setNewPriority] = useState<TaskPriority>('medium');
   const [newStoryPoints, setNewStoryPoints] = useState(3);
   const [newTags, setNewTags] = useState('');
 
-  // Filtering logic
+  // Filtering logic (local filtering on already-fetched data)
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           task.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesProject = selectedProjectFilter === 'all' || task.projectId === selectedProjectFilter;
-    const matchesPriority = selectedPriorityFilter === 'all' || task.priority === selectedPriorityFilter;
+    const matchesProject = filterProject === 'all' || task.projectId === filterProject;
+    const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+    const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
 
-    return matchesSearch && matchesProject && matchesPriority;
+    return matchesSearch && matchesProject && matchesPriority && matchesStatus;
   });
-
-  // State manipulation handlers
-  const handleMoveStatus = (taskId: string, targetStatus: TaskStatus, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        return { ...t, status: targetStatus };
-      }
-      return t;
-    }));
-  };
-
-  const handleToggleDone = (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        return { ...t, status: t.status === 'done' ? 'in_progress' : 'done' };
-      }
-      return t;
-    }));
-  };
-
-  const handleDeleteTask = (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm("Are you sure you want to terminate this task scope?")) {
-      setTasks(prev => prev.filter(t => t.id !== taskId));
-    }
-  };
-
-  const handleCreateTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const matchedProject = projects.find(p => p.id === newProjId);
-    
-    const created: Task = {
-      id: `task-${Date.now()}`,
-      title: newTitle,
-      description: newDesc || 'No extended documentation compiled.',
-      status: 'todo',
-      priority: newPriority,
-      dueDate: "2026-07-20", // Today's cycle
-      assignee: {
-        name: "Alex Carter",
-        role: "Lead Architect",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120"
-      },
-      projectId: newProjId,
-      projectName: matchedProject ? matchedProject.name : 'Unassigned Root',
-      storyPoints: newStoryPoints,
-      tags: newTags ? newTags.split(',').map(s => s.trim()).filter(Boolean) : ['Custom'],
-      milestones: [],
-      comments: []
-    };
-
-    setTasks(prev => [created, ...prev]);
-
-    // Reset Form
-    setNewTitle('');
-    setNewDesc('');
-    setNewPriority('medium');
-    setNewStoryPoints(3);
-    setNewTags('');
-    setShowAddModal(false);
-  };
 
   const getAccentColorHex = () => {
     switch (accentColor) {
@@ -139,6 +129,43 @@ export default function TasksScreen({
 
   const activeAccent = getAccentColorHex();
 
+  // Drag and drop handlers
+  const handleDragStart = (taskId: string) => {
+    setDragTaskId(taskId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetStatus: TaskStatus) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-blue-500/50', 'bg-blue-500/5');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('border-blue-500/50', 'bg-blue-500/5');
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStatus: TaskStatus) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-blue-500/50', 'bg-blue-500/5');
+    if (!dragTaskId) return;
+    
+    const task = tasks.find(t => t.id === dragTaskId);
+    if (!task || task.status === targetStatus) return;
+
+    try {
+      if (targetStatus === 'done' && task.status !== 'done') {
+        await taskService.toggleTask(dragTaskId);
+      } else if (targetStatus !== 'done' && task.status === 'done') {
+        await taskService.toggleTask(dragTaskId);
+      }
+      setTasks(prev => prev.map(t => 
+        t.id === dragTaskId ? { ...t, status: targetStatus } : t
+      ));
+    } catch (err) {
+      console.error('Drag drop failed:', err);
+    }
+    setDragTaskId(null);
+  };
+
   // Render a single task card
   const renderTaskCard = (task: Task) => {
     const isCompleted = task.status === 'done';
@@ -146,11 +173,13 @@ export default function TasksScreen({
     return (
       <motion.div
         key={task.id}
-        layoutId={task.id}
+        layoutId={`task-${task.id}`}
         onClick={() => {
           setSelectedTaskId(task.id);
           setActiveTab('task-detail');
         }}
+        draggable
+        onDragStart={() => handleDragStart(task.id)}
         className={`p-4 bg-[#0c0f16]/90 border border-slate-800/80 hover:border-slate-700/80 rounded-xl shadow-lg transition-all flex flex-col justify-between gap-4 group cursor-pointer relative ${
           isCompleted ? 'opacity-60 border-slate-900/60 bg-slate-950/20' : ''
         }`}
@@ -216,7 +245,10 @@ export default function TasksScreen({
           <div className="flex items-center gap-1 shrink-0">
             {task.status !== 'todo' && (
               <button
-                onClick={(e) => handleMoveStatus(task.id, task.status === 'done' ? 'in_progress' : 'todo', e)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleTask(task.id, e);
+                }}
                 className="p-1 hover:bg-slate-900 rounded text-slate-500 hover:text-white transition-colors cursor-pointer"
                 title="Move Back"
               >
@@ -225,7 +257,7 @@ export default function TasksScreen({
             )}
 
             <button
-              onClick={(e) => handleToggleDone(task.id, e)}
+              onClick={(e) => onToggleTask(task.id, e)}
               className={`p-1 rounded transition-colors cursor-pointer ${
                 isCompleted ? 'text-emerald-400 hover:bg-emerald-950/20' : 'text-slate-500 hover:text-emerald-400 hover:bg-slate-900'
               }`}
@@ -236,7 +268,10 @@ export default function TasksScreen({
 
             {task.status !== 'done' && (
               <button
-                onClick={(e) => handleMoveStatus(task.id, task.status === 'todo' ? 'in_progress' : 'done', e)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleTask(task.id, e);
+                }}
                 className="p-1 hover:bg-slate-900 rounded text-slate-500 hover:text-white transition-colors cursor-pointer"
                 title="Move Forward"
               >
@@ -245,7 +280,7 @@ export default function TasksScreen({
             )}
 
             <button
-              onClick={(e) => handleDeleteTask(task.id, e)}
+              onClick={(e) => onDeleteTask(task.id, e)}
               className="p-1 hover:bg-slate-900 rounded text-slate-500 hover:text-red-400 transition-colors cursor-pointer ml-1"
               title="Delete task"
             >
@@ -278,6 +313,11 @@ export default function TasksScreen({
 
         {/* View Switches & Action button */}
         <div className="flex items-center gap-3">
+          {/* Total count */}
+          <span className="text-[10px] font-mono text-slate-500 bg-slate-900 border border-slate-800/60 px-3 py-1.5 rounded-xl">
+            {total} ITEMS
+          </span>
+
           {/* Toggle View Layout */}
           <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl">
             <button
@@ -297,6 +337,15 @@ export default function TasksScreen({
               <List className="w-3.5 h-3.5" /> LIST
             </button>
           </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={onRefresh}
+            className="p-2 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
 
           {/* Scaffold Task Button */}
           <button
@@ -320,25 +369,72 @@ export default function TasksScreen({
             type="text"
             placeholder="Search pipelines, scopes, tags..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="w-full bg-[#07090d] border border-slate-800/80 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/50 transition-all font-sans"
           />
         </div>
 
         {/* Dropdowns */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Sort */}
+          <div className="flex items-center gap-1.5 bg-[#07090d] border border-slate-800/80 px-2.5 py-1.5 rounded-xl">
+            <select
+              value={`${sortBy}-${''}`}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'createdAt-desc') onSortChange('createdAt', 'desc');
+                else if (val === 'createdAt-asc') onSortChange('createdAt', 'asc');
+                else if (val === 'dueDate-asc') onSortChange('dueDate', 'asc');
+                else if (val === 'dueDate-desc') onSortChange('dueDate', 'desc');
+                else if (val === 'priority-desc') onSortChange('priority', 'desc');
+                else if (val === 'priority-asc') onSortChange('priority', 'asc');
+                else if (val === 'title-asc') onSortChange('title', 'asc');
+                else if (val === 'title-desc') onSortChange('title', 'desc');
+              }}
+              className="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
+            >
+              <option value="createdAt-desc" className="bg-[#0a0d14]">SORT: NEWEST</option>
+              <option value="createdAt-asc" className="bg-[#0a0d14]">SORT: OLDEST</option>
+              <option value="dueDate-asc" className="bg-[#0a0d14]">SORT: DUE DATE ↑</option>
+              <option value="dueDate-desc" className="bg-[#0a0d14]">SORT: DUE DATE ↓</option>
+              <option value="priority-desc" className="bg-[#0a0d14]">SORT: PRIORITY ↑</option>
+              <option value="priority-asc" className="bg-[#0a0d14]">SORT: PRIORITY ↓</option>
+              <option value="title-asc" className="bg-[#0a0d14]">SORT: TITLE A-Z</option>
+              <option value="title-desc" className="bg-[#0a0d14]">SORT: TITLE Z-A</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-1.5 bg-[#07090d] border border-slate-800/80 px-2.5 py-1.5 rounded-xl">
+            <Filter className="w-3.5 h-3.5 text-slate-500" />
+            <select
+              value={filterStatus}
+              onChange={(e) => onFilterStatusChange(e.target.value)}
+              className="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
+            >
+              <option value="all" className="bg-[#0a0d14]">ALL STATUS</option>
+              <option value="todo" className="bg-[#0a0d14]">🔵 TODO</option>
+              <option value="in_progress" className="bg-[#0a0d14]">🟣 IN PROGRESS</option>
+              <option value="done" className="bg-[#0a0d14]">🟢 DONE</option>
+            </select>
+          </div>
+
           {/* Project Filter */}
           <div className="flex items-center gap-1.5 bg-[#07090d] border border-slate-800/80 px-2.5 py-1.5 rounded-xl">
             <Filter className="w-3.5 h-3.5 text-slate-500" />
             <select
-              value={selectedProjectFilter}
-              onChange={(e) => setSelectedProjectFilter(e.target.value)}
+              value={filterProject}
+              onChange={(e) => onFilterProjectChange(e.target.value)}
               className="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
             >
               <option value="all" className="bg-[#0a0d14]">ALL PROJECTS</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id} className="bg-[#0a0d14]">{p.name.toUpperCase()}</option>
-              ))}
+              {/* Projects are fetched from context - we use the unique projectIds from tasks */}
+              {Array.from(new Set(tasks.map(t => t.projectId))).map(pid => {
+                const task = tasks.find(t => t.projectId === pid);
+                return task ? (
+                  <option key={pid} value={pid} className="bg-[#0a0d14]">{task.projectName.toUpperCase()}</option>
+                ) : null;
+              })}
             </select>
           </div>
 
@@ -346,8 +442,8 @@ export default function TasksScreen({
           <div className="flex items-center gap-1.5 bg-[#07090d] border border-slate-800/80 px-2.5 py-1.5 rounded-xl">
             <Clock className="w-3.5 h-3.5 text-slate-500" />
             <select
-              value={selectedPriorityFilter}
-              onChange={(e) => setSelectedPriorityFilter(e.target.value)}
+              value={filterPriority}
+              onChange={(e) => onFilterPriorityChange(e.target.value)}
               className="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
             >
               <option value="all" className="bg-[#0a0d14]">ALL PRIORITIES</option>
@@ -357,6 +453,19 @@ export default function TasksScreen({
               <option value="low" className="bg-[#0a0d14]">🛡️ LOW</option>
             </select>
           </div>
+
+          {/* Archived Toggle */}
+          <button
+            onClick={onToggleArchived}
+            className={`flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
+              showArchived
+                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                : 'bg-[#07090d] text-slate-500 border-slate-800/80 hover:text-slate-300'
+            }`}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {showArchived ? 'SHOWING ARCHIVED' : 'ARCHIVED'}
+          </button>
         </div>
       </div>
 
@@ -365,7 +474,12 @@ export default function TasksScreen({
         /* Kanban View columns grid */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* TO DO column */}
-          <div className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4">
+          <div
+            onDragOver={(e) => handleDragOver(e, 'todo')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'todo')}
+            className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4 transition-all"
+          >
             <div className="flex justify-between items-center border-b border-slate-800/40 pb-2">
               <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-500" /> TO DO
@@ -386,7 +500,12 @@ export default function TasksScreen({
           </div>
 
           {/* IN PROGRESS column */}
-          <div className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4">
+          <div
+            onDragOver={(e) => handleDragOver(e, 'in_progress')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'in_progress')}
+            className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4 transition-all"
+          >
             <div className="flex justify-between items-center border-b border-slate-800/40 pb-2">
               <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-purple-500" /> IN PROGRESS
@@ -407,7 +526,12 @@ export default function TasksScreen({
           </div>
 
           {/* DONE column */}
-          <div className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4">
+          <div
+            onDragOver={(e) => handleDragOver(e, 'done')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'done')}
+            className="bg-[#0a0d14]/40 border border-slate-800/40 rounded-2xl p-4 flex flex-col gap-4 transition-all"
+          >
             <div className="flex justify-between items-center border-b border-slate-800/40 pb-2">
               <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> DONE
@@ -458,7 +582,7 @@ export default function TasksScreen({
                       <td className="py-4 px-6 font-semibold text-slate-200">
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={(e) => handleToggleDone(task.id, e)}
+                            onClick={(e) => onToggleTask(task.id, e)}
                             className={`h-5 w-5 rounded flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
                               isCompleted 
                                 ? 'bg-emerald-500/20 border-emerald-500/80 text-emerald-400' 
@@ -514,18 +638,76 @@ export default function TasksScreen({
                         {task.storyPoints} SP
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <button
-                          onClick={(e) => handleDeleteTask(task.id, e)}
-                          className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          {onArchiveTask && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onArchiveTask(task.id) }}
+                              className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-500 hover:text-amber-400 transition-colors cursor-pointer"
+                              title="Archive task"
+                            >
+                              <Archive className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => onDeleteTask(task.id, e)}
+                            className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-[#0a0d14]/60 border border-slate-800/60 px-4 py-3 rounded-2xl">
+          <span className="text-[10px] font-mono text-slate-500">
+            Page {page} of {totalPages} ({total} tasks)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+              const p = start + i;
+              if (p > totalPages) return null;
+              return (
+                <button
+                  key={p}
+                  onClick={() => onPageChange(p)}
+                  className={`min-w-[32px] h-8 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+                    p === page
+                      ? 'text-white border'
+                      : 'text-slate-500 hover:text-slate-300 bg-slate-900 border border-slate-800'
+                  }`}
+                  style={p === page ? { borderColor: activeAccent, color: activeAccent } : {}}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
@@ -550,7 +732,22 @@ export default function TasksScreen({
               </button>
             </div>
 
-            <form onSubmit={handleCreateTask} className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newTitle.trim()) return;
+              onCreateTask({
+                title: newTitle,
+                description: newDesc || 'No extended documentation compiled.',
+                priority: newPriority,
+                listId: newProjId,
+              });
+              setNewTitle('');
+              setNewDesc('');
+              setNewPriority('medium');
+              setNewStoryPoints(3);
+              setNewTags('');
+              setShowAddModal(false);
+            }} className="space-y-4">
               {/* Title */}
               <div>
                 <label className="block text-[10px] font-mono tracking-wider uppercase text-slate-500 mb-1.5">Task Title</label>
@@ -585,9 +782,12 @@ export default function TasksScreen({
                     onChange={(e) => setNewProjId(e.target.value)}
                     className="w-full bg-[#07090d] border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-300 font-mono focus:outline-none cursor-pointer"
                   >
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>
-                    ))}
+                    {Array.from(new Set(tasks.map(t => t.projectId))).map(pid => {
+                      const task = tasks.find(t => t.projectId === pid);
+                      return task ? (
+                        <option key={pid} value={pid} className="bg-[#0a0d14]">{task.projectName.toUpperCase()}</option>
+                      ) : null;
+                    })}
                   </select>
                 </div>
 

@@ -1,12 +1,23 @@
 import type { Request, Response } from 'express'
-import { createTaskSchema, updateTaskSchema, taskParamsSchema } from '../utils/validation.js'
+import {
+  createTaskSchema,
+  updateTaskSchema,
+  taskParamsSchema,
+  taskListQuerySchema,
+} from '../utils/validation.js'
 import * as taskService from '../services/taskService.js'
 import { TaskError } from '../services/taskService.js'
 
 export async function list(req: Request, res: Response) {
+  const query = taskListQuerySchema.safeParse(req.query)
+  if (!query.success) {
+    res.status(400).json({ message: 'Invalid query parameters', errors: query.error.flatten() })
+    return
+  }
+
   try {
-    const tasks = await taskService.listTasks(req.user!.id)
-    res.json({ tasks })
+    const result = await taskService.listTasks(req.user!.id, query.data)
+    res.json(result)
   } catch {
     res.status(500).json({ message: 'Internal server error' })
   }
@@ -111,6 +122,69 @@ export async function toggle(req: Request, res: Response) {
 
   try {
     const task = await taskService.toggleTask(req.user!.id, params.data.id)
+    res.json({ task })
+  } catch (err) {
+    if (err instanceof TaskError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function archive(req: Request, res: Response) {
+  const params = taskParamsSchema.safeParse(req.params)
+  if (!params.success) {
+    res.status(400).json({ message: 'Invalid task ID' })
+    return
+  }
+
+  try {
+    const task = await taskService.archiveTask(req.user!.id, params.data.id)
+    res.json({ task })
+  } catch (err) {
+    if (err instanceof TaskError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function restore(req: Request, res: Response) {
+  const params = taskParamsSchema.safeParse(req.params)
+  if (!params.success) {
+    res.status(400).json({ message: 'Invalid task ID' })
+    return
+  }
+
+  try {
+    const task = await taskService.restoreTask(req.user!.id, params.data.id)
+    res.json({ task })
+  } catch (err) {
+    if (err instanceof TaskError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function reorder(req: Request, res: Response) {
+  const params = taskParamsSchema.safeParse(req.params)
+  if (!params.success) {
+    res.status(400).json({ message: 'Invalid task ID' })
+    return
+  }
+
+  const { sortOrder } = req.body
+  if (typeof sortOrder !== 'number') {
+    res.status(400).json({ message: 'sortOrder must be a number' })
+    return
+  }
+
+  try {
+    const task = await taskService.reorderTask(req.user!.id, params.data.id, sortOrder)
     res.json({ task })
   } catch (err) {
     if (err instanceof TaskError) {

@@ -72,8 +72,10 @@ model Task {
   title       String
   description String?
   completed   Boolean   @default(false)
+  archived    Boolean   @default(false)
   priority    Int       @default(0)
   dueDate     DateTime?
+  sortOrder   Int       @default(0)
   listId      String
   categoryId  String?
   userId      String

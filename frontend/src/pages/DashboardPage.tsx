@@ -19,11 +19,12 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [backendTasks, backendLists, analytics] = await Promise.all([
+        const [tasksResult, backendLists, analytics] = await Promise.all([
           taskService.getTasks(),
           listService.getLists(),
           analyticsService.getAnalytics(),
         ])
+        const backendTasks = tasksResult.tasks
 
         const listMap = new Map(backendLists.map(l => [l.id, l]))
 

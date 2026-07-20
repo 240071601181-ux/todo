@@ -47,26 +47,18 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <Routes>
-                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                      <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/tasks" element={<TasksPage />} />
-                      <Route path="/tasks/:id" element={<TaskDetailPage />} />
-                      <Route path="/projects" element={<ProjectsPage />} />
-                      <Route path="/projects/:id" element={<ProjectsPage />} />
-                      <Route path="/calendar" element={<CalendarPage />} />
-                      <Route path="/settings" element={<SettingsPage />} />
-                      <Route path="/profile" element={<ProfilePage />} />
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              }
-            />
+            <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/tasks/:id" element={<TaskDetailPage />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectsPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
