@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 import prisma from '../utils/prisma.js'
 import {
   signAccessToken,
@@ -11,6 +12,8 @@ import type { z } from 'zod'
 
 type RegisterInput = z.infer<typeof registerSchema>
 type LoginInput = z.infer<typeof loginSchema>
+
+const RESET_SECRET = process.env.JWT_SECRET ?? 'fallback-access-secret'
 
 function generateTokenId(): string {
   return crypto.randomUUID()
@@ -165,6 +168,37 @@ export async function getMe(userId: string) {
   }
 
   return user
+}
+
+export async function forgotPassword(input: { email: string }) {
+  const user = await prisma.user.findUnique({ where: { email: input.email } })
+  if (!user) {
+    return { message: 'If that email is registered, a reset link has been sent.' }
+  }
+
+  const resetToken = jwt.sign({ userId: user.id, type: 'reset' }, RESET_SECRET, { expiresIn: '1h' })
+
+  return {
+    message: 'If that email is registered, a reset link has been sent.',
+    resetToken,
+  }
+}
+
+export async function resetPassword(input: { token: string; password: string }) {
+  let payload: { userId: string }
+  try {
+    payload = jwt.verify(input.token, RESET_SECRET) as { userId: string }
+  } catch {
+    throw new AuthError('Invalid or expired reset token', 400)
+  }
+
+  const hashed = await bcrypt.hash(input.password, 12)
+  await prisma.user.update({
+    where: { id: payload.userId },
+    data: { password: hashed },
+  })
+
+  return { message: 'Password reset successfully' }
 }
 
 export class AuthError extends Error {

@@ -6,8 +6,8 @@ export default function ProfilePage() {
   const { user, settings, logout } = useApp()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
 

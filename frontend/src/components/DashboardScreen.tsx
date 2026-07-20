@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   TrendingUp, 
@@ -15,6 +15,7 @@ import {
   Users
 } from 'lucide-react';
 import { Task, Project, UserProfile, CalendarEvent, AppSettings } from '../types';
+import { toggleTask as apiToggleTask } from '../services/taskService';
 
 interface DashboardScreenProps {
   user: UserProfile;
@@ -42,7 +43,7 @@ export default function DashboardScreen({
   const [claimedBoost, setClaimedBoost] = useState(false);
 
   // Derive metrics
-  const todayDateStr = "2026-07-20"; // standard context date
+  const todayDateStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const todayTasks = tasks.filter(t => t.dueDate === todayDateStr);
   const totalTodayCount = todayTasks.length;
   const completedTodayCount = todayTasks.filter(t => t.status === 'done').length;
@@ -53,42 +54,56 @@ export default function DashboardScreen({
   const mediumCount = tasks.filter(t => t.priority === 'medium').length;
   const lowCount = tasks.filter(t => t.priority === 'low').length;
 
-  // Toggle task status
-  const handleToggleTask = (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent opening details
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        const newStatus = t.status === 'done' ? 'in_progress' : 'done';
-        
-        // Award XP if completed
-        if (newStatus === 'done') {
-          setUser(u => {
-            const addedXp = t.storyPoints * 100;
-            let newXp = u.xp + addedXp;
-            let newLevel = u.level;
-            if (newXp >= u.nextLevelXp) {
-              newXp = newXp - u.nextLevelXp;
-              newLevel += 1;
-            }
-            return {
-              ...u,
-              xp: newXp,
-              level: newLevel,
-              productivityScore: u.productivityScore + 25
-            };
-          });
-        } else {
-          // Subtract score
-          setUser(u => ({
-            ...u,
-            productivityScore: Math.max(0, u.productivityScore - 20)
-          }));
-        }
+  const dayName = useMemo(() => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[new Date().getDay()];
+  }, []);
 
-        return { ...t, status: newStatus };
-      }
-      return t;
-    }));
+  const focusMinutesToday = useMemo(() => {
+    return completedTodayCount * 25 + user.streakDays * 5;
+  }, [completedTodayCount, user.streakDays]);
+
+  // Toggle task status via API
+  const handleToggleTask = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent opening details
+    try {
+      const result = await apiToggleTask(taskId);
+      setTasks(prev => prev.map(t => {
+        if (t.id === taskId) {
+          const newStatus = result.completed ? 'done' : 'todo';
+          
+          // Award XP if completed
+          if (newStatus === 'done') {
+            setUser(u => {
+              const addedXp = t.storyPoints * 100;
+              let newXp = u.xp + addedXp;
+              let newLevel = u.level;
+              if (newXp >= u.nextLevelXp) {
+                newXp = newXp - u.nextLevelXp;
+                newLevel += 1;
+              }
+              return {
+                ...u,
+                xp: newXp,
+                level: newLevel,
+                productivityScore: u.productivityScore + 25
+              };
+            });
+          } else {
+            // Subtract score
+            setUser(u => ({
+              ...u,
+              productivityScore: Math.max(0, u.productivityScore - 20)
+            }));
+          }
+
+          return { ...t, status: newStatus };
+        }
+        return t;
+      }));
+    } catch (err) {
+      console.error('Failed to toggle task:', err);
+    }
   };
 
   const handleClaimBoost = () => {
@@ -153,8 +168,8 @@ export default function DashboardScreen({
         <div className="flex items-center gap-3 bg-[#0a0e17] border border-slate-800/80 px-4 py-2.5 rounded-xl">
           <Calendar className="w-4 h-4 text-slate-500" />
           <div className="text-right">
-            <span className="text-xs font-semibold text-slate-300 block font-mono">2026-07-20 UTC</span>
-            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">Monday Operational Cycle</span>
+            <span className="text-xs font-semibold text-slate-300 block font-mono">{todayDateStr} UTC</span>
+            <span className="text-[10px] text-slate-500 block uppercase font-mono tracking-wider">{dayName} Operational Cycle</span>
           </div>
         </div>
       </div>
@@ -223,7 +238,7 @@ export default function DashboardScreen({
         <div className="bg-[#0c0f16] border border-slate-800/60 p-5 rounded-2xl relative overflow-hidden group">
           <div className="space-y-1">
             <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase block">Focused Session Duration</span>
-            <span className="text-2xl font-bold font-display block text-white">142 Mins</span>
+            <span className="text-2xl font-bold font-display block text-white">{focusMinutesToday} Mins</span>
             <span className="text-[10px] text-slate-400 font-mono block">
               Daily target: 180 Mins
             </span>

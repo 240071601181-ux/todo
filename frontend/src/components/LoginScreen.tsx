@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, User, ArrowRight, Sparkles, Terminal, ShieldAlert } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface LoginScreenProps {
-  onLoginSuccess: (name: string, email: string) => void;
+  onLogin: (email: string, password: string) => Promise<void>;
+  onRegister: (name: string, email: string, password: string) => Promise<void>;
   settings: AppSettings;
 }
 
-export default function LoginScreen({ onLoginSuccess, settings }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, onRegister, settings }: LoginScreenProps) {
+  const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,7 +19,7 @@ export default function LoginScreen({ onLoginSuccess, settings }: LoginScreenPro
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -26,19 +29,30 @@ export default function LoginScreen({ onLoginSuccess, settings }: LoginScreenPro
     }
 
     setIsLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
+    try {
+      if (isRegister) {
+        await onRegister(name, email, password);
+      } else {
+        await onLogin(email, password);
+      }
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response: { data: { message: string } } }).response?.data?.message ?? 'Authentication failed')
+          : err instanceof Error
+            ? err.message
+            : 'Authentication failed';
+      setError(message);
+    } finally {
       setIsLoading(false);
-      onLoginSuccess(isRegister ? name : email.split('@')[0], email);
-    }, 1200);
+    }
   };
 
-  const handleSSOLogin = (provider: string) => {
+  const handleSSOLogin = async (provider: string) => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess(`Developer (${provider})`, `dev@${provider.toLowerCase()}.io`);
-    }, 800);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setIsLoading(false);
+    setError(`${provider} SSO is not yet configured.`);
   };
 
   const accentColors: Record<string, string> = {
@@ -153,7 +167,11 @@ export default function LoginScreen({ onLoginSuccess, settings }: LoginScreenPro
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-[11px] font-mono tracking-wider uppercase text-slate-400">Security Key / Password</label>
               {!isRegister && (
-                <button type="button" className="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition-colors"
+                >
                   FORGOT?
                 </button>
               )}
