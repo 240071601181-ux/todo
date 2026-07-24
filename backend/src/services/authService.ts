@@ -201,6 +201,50 @@ export async function resetPassword(input: { token: string; password: string }) 
   return { message: 'Password reset successfully' }
 }
 
+export async function updateProfile(userId: string, input: { name?: string; email?: string; account?: string }) {
+  if (input.email) {
+    const existing = await prisma.user.findUnique({ where: { email: input.email } })
+    if (existing && existing.id !== userId) {
+      throw new AuthError('Email already in use', 409)
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: input,
+    select: { id: true, name: true, email: true, account: true, avatarUrl: true },
+  })
+
+  return user
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new AuthError('User not found', 404)
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.password)
+  if (!valid) {
+    throw new AuthError('Current password is incorrect', 400)
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 12)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashed },
+  })
+}
+
+export async function uploadAvatar(userId: string, filePath: string) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { avatarUrl: filePath },
+    select: { id: true, name: true, email: true, account: true, avatarUrl: true },
+  })
+  return user
+}
+
 export class AuthError extends Error {
   status: number
   constructor(message: string, status: number) {

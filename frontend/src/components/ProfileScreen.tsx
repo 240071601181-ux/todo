@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { 
   Award, 
@@ -13,7 +13,18 @@ import {
   Flame,
   UserCheck,
   Send,
-  Sliders
+  Sliders,
+  Pencil,
+  Camera,
+  Save,
+  X,
+  KeyRound,
+  Eye,
+  EyeOff,
+  BarChart3,
+  CheckSquare,
+  ListTodo,
+  Target,
 } from 'lucide-react';
 import { UserProfile, AppSettings } from '../types';
 
@@ -24,13 +35,43 @@ interface ProfileScreenProps {
   accentColor: string;
   weeklyTaskTotal?: number;
   projectCount?: number;
+  onUpdateProfile?: (data: { name?: string; email?: string }) => Promise<void>;
+  onChangePassword?: (currentPassword: string, newPassword: string) => Promise<void>;
+  onUploadAvatar?: (file: File) => Promise<void>;
 }
 
-export default function ProfileScreen({ user, settings, onLogout, accentColor, weeklyTaskTotal, projectCount }: ProfileScreenProps) {
+export default function ProfileScreen({
+  user,
+  settings,
+  onLogout,
+  accentColor,
+  weeklyTaskTotal,
+  projectCount,
+  onUpdateProfile,
+  onChangePassword,
+  onUploadAvatar,
+}: ProfileScreenProps) {
   
   const [notifReports, setNotifReports] = useState(true);
   const [telemetry, setTelemetry] = useState(false);
   const [weeklyDigest, setWeeklyDigest] = useState(true);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(user.name);
+  const [editEmail, setEditEmail] = useState(user.email);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const [pwChanging, setPwChanging] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getAccentColorHex = () => {
     switch (accentColor) {
@@ -43,6 +84,62 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
   };
 
   const activeAccent = getAccentColorHex();
+
+  const handleSaveProfile = async () => {
+    if (!onUpdateProfile) return;
+    setEditError('');
+    setSaving(true);
+    try {
+      await onUpdateProfile({ name: editName, email: editEmail });
+      setEditing(false);
+    } catch (err: any) {
+      setEditError(err?.response?.data?.message ?? 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!onChangePassword) return;
+    setPwError('');
+    setPwSuccess('');
+    if (newPw !== confirmPw) {
+      setPwError('New passwords do not match');
+      return;
+    }
+    if (newPw.length < 6) {
+      setPwError('New password must be at least 6 characters');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await onChangePassword(currentPw, newPw);
+      setPwSuccess('Password changed successfully');
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+      setPwChanging(false);
+    } catch (err: any) {
+      setPwError(err?.response?.data?.message ?? 'Failed to change password');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadAvatar) return;
+    try {
+      await onUploadAvatar(file);
+    } catch {
+      // silently fail
+    }
+    e.target.value = '';
+  };
 
   const achievements = [
     { 
@@ -127,36 +224,101 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
         
         {/* Left Column Profile identity Card */}
         <div className="bg-[#0c0f16]/90 border border-slate-800/60 p-6 rounded-2xl flex flex-col items-center text-center space-y-5">
-          <div className="relative">
+          <div className="relative group">
             <img 
               src={user.avatar} 
               alt={user.name} 
               className="h-24 w-24 rounded-full object-cover border-2 border-slate-800"
               referrerPolicy="no-referrer"
             />
-            {/* Streak hot indicator */}
+            {onUploadAvatar && (
+              <>
+                <button
+                  onClick={handleAvatarClick}
+                  className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                >
+                  <Camera className="w-6 h-6 text-white" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </>
+            )}
             <span className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-[#05060a] border border-slate-800 flex items-center justify-center text-xs" title="Streak 🔥">
               🔥
             </span>
           </div>
 
-          <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-200">{user.name}</h2>
-            <span className="text-xs font-mono text-slate-500 uppercase tracking-wider block">{user.role}</span>
-            <span className="text-[11px] text-slate-400 block pt-0.5">{user.email}</span>
-          </div>
+          {editing ? (
+            <div className="w-full space-y-3">
+              <input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 text-center"
+                placeholder="Your name"
+              />
+              <input
+                value={editEmail}
+                onChange={e => setEditEmail(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 text-center"
+                placeholder="Your email"
+              />
+              {editError && (
+                <p className="text-[10px] text-red-400 font-mono">{editError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium text-white transition-all cursor-pointer disabled:opacity-50"
+                  style={{ backgroundColor: activeAccent }}
+                >
+                  <Save className="w-3 h-3" />
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => { setEditing(false); setEditName(user.name); setEditEmail(user.email); setEditError(''); }}
+                  className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-[11px] font-medium text-slate-400 bg-slate-900 border border-slate-800/60 hover:text-slate-200 transition-all cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <div className="flex items-center justify-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-200">{user.name}</h2>
+                  {onUpdateProfile && (
+                    <button
+                      onClick={() => { setEditing(true); setEditName(user.name); setEditEmail(user.email); }}
+                      className="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-slate-300 transition-all cursor-pointer"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <span className="text-xs font-mono text-slate-500 uppercase tracking-wider block">{user.role}</span>
+                <span className="text-[11px] text-slate-400 block pt-0.5">{user.email}</span>
+              </div>
 
-          <div className="w-full border-t border-slate-800/40 pt-4 flex justify-between gap-4">
-            <div className="flex-1">
-              <span className="text-[10px] font-mono text-slate-500 uppercase block">Total level</span>
-              <span className="text-lg font-bold text-white font-mono">{user.level}</span>
-            </div>
-            <div className="border-l border-slate-800/40"></div>
-            <div className="flex-1">
-              <span className="text-[10px] font-mono text-slate-500 uppercase block">Daily streak</span>
-              <span className="text-lg font-bold text-amber-400 font-mono">🔥 {user.streakDays}</span>
-            </div>
-          </div>
+              <div className="w-full border-t border-slate-800/40 pt-4 flex justify-between gap-4">
+                <div className="flex-1">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase block">Total level</span>
+                  <span className="text-lg font-bold text-white font-mono">{user.level}</span>
+                </div>
+                <div className="border-l border-slate-800/40"></div>
+                <div className="flex-1">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase block">Daily streak</span>
+                  <span className="text-lg font-bold text-amber-400 font-mono">🔥 {user.streakDays}</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right 2 Columns Progression Stats meters */}
@@ -207,6 +369,119 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
         </div>
       </div>
 
+      {/* Personal Statistics */}
+      <div className="bg-[#0c0f16]/90 border border-slate-800/60 p-6 rounded-2xl">
+        <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/40 pb-3 mb-5 flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" style={{ color: activeAccent }} /> Personal Statistics
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-900/30 border border-slate-800/40 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-4 h-4" style={{ color: activeAccent }} />
+              <span className="text-[10px] font-mono text-slate-500 uppercase">Productivity Trend</span>
+            </div>
+            <span className={`text-lg font-bold font-mono ${user.productivityTrend >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {user.productivityTrend >= 0 ? '+' : ''}{user.productivityTrend}%
+            </span>
+          </div>
+          <div className="p-4 bg-slate-900/30 border border-slate-800/40 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckSquare className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-slate-500 uppercase">Streak Days</span>
+            </div>
+            <span className="text-lg font-bold font-mono text-amber-400">{user.streakDays} days</span>
+          </div>
+          <div className="p-4 bg-slate-900/30 border border-slate-800/40 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-blue-500" />
+              <span className="text-[10px] font-mono text-slate-500 uppercase">XP Level</span>
+            </div>
+            <span className="text-lg font-bold font-mono text-white">Lv.{user.level}</span>
+          </div>
+          <div className="p-4 bg-slate-900/30 border border-slate-800/40 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <ListTodo className="w-4 h-4 text-purple-500" />
+              <span className="text-[10px] font-mono text-slate-500 uppercase">Weekly Total</span>
+            </div>
+            <span className="text-lg font-bold font-mono text-white">{weeklyTaskTotal ?? user.weeklyTaskCount.reduce((a, b) => a + b, 0)} tasks</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Password Change */}
+      {onChangePassword && (
+      <div className="bg-[#0c0f16]/90 border border-slate-800/60 p-6 rounded-2xl max-w-4xl">
+        <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/40 pb-3 mb-5 flex items-center gap-2">
+          <KeyRound className="w-4 h-4" style={{ color: activeAccent }} /> Security & Authentication
+        </h3>
+
+        {pwChanging ? (
+          <div className="space-y-3 max-w-md">
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={currentPw}
+                onChange={e => setCurrentPw(e.target.value)}
+                placeholder="Current password"
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 pr-10"
+              />
+            </div>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={newPw}
+                onChange={e => setNewPw(e.target.value)}
+                placeholder="New password (min 6 characters)"
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 pr-10"
+              />
+              <button
+                onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={confirmPw}
+                onChange={e => setConfirmPw(e.target.value)}
+                placeholder="Confirm new password"
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 pr-10"
+              />
+            </div>
+            {pwError && <p className="text-[10px] text-red-400 font-mono">{pwError}</p>}
+            {pwSuccess && <p className="text-[10px] text-emerald-400 font-mono">{pwSuccess}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handleChangePassword}
+                disabled={pwSaving || !currentPw || !newPw || !confirmPw}
+                className="flex items-center gap-1.5 py-2 px-4 rounded-lg text-[11px] font-medium text-white transition-all cursor-pointer disabled:opacity-50"
+                style={{ backgroundColor: activeAccent }}
+              >
+                <KeyRound className="w-3 h-3" />
+                {pwSaving ? 'Changing...' : 'Change Password'}
+              </button>
+              <button
+                onClick={() => { setPwChanging(false); setPwError(''); setPwSuccess(''); setCurrentPw(''); setNewPw(''); setConfirmPw(''); }}
+                className="flex items-center gap-1.5 py-2 px-3 rounded-lg text-[11px] font-medium text-slate-400 bg-slate-900 border border-slate-800/60 hover:text-slate-200 transition-all cursor-pointer"
+              >
+                <X className="w-3 h-3" /> Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setPwChanging(true)}
+            className="flex items-center gap-2 py-2 px-4 rounded-lg text-[11px] font-medium text-slate-400 bg-slate-900/40 border border-slate-800/40 hover:text-slate-200 hover:bg-slate-900/60 transition-all cursor-pointer"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Change Password
+          </button>
+        )}
+      </div>
+      )}
+
       {/* Badges and Achievements Grid */}
       <div className="bg-[#0c0f16]/90 border border-slate-800/60 p-6 rounded-2xl">
         <h3 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/40 pb-3 mb-5">
@@ -245,7 +520,6 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
         </h3>
 
         <div className="space-y-4">
-          {/* report toggle */}
           <div className="flex items-center justify-between p-3 bg-slate-900/20 rounded-xl border border-slate-800/40">
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-200 block">Real-time Notification Alerts</span>
@@ -264,7 +538,6 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
             </button>
           </div>
 
-          {/* portfolio telemetry */}
           <div className="flex items-center justify-between p-3 bg-slate-900/20 rounded-xl border border-slate-800/40">
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-200 block">Public Portfolio Telemetry</span>
@@ -283,7 +556,6 @@ export default function ProfileScreen({ user, settings, onLogout, accentColor, w
             </button>
           </div>
 
-          {/* email report toggle */}
           <div className="flex items-center justify-between p-3 bg-slate-900/20 rounded-xl border border-slate-800/40">
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-200 block">Weekly Digest Email Report</span>

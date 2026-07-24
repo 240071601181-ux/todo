@@ -21,7 +21,15 @@ model User {
   notifications  Notification[]
   projects       Project[]
   refreshTokens  RefreshToken[]
+  settings       UserSettings?
   tasks          Task[]
+}
+
+model UserSettings {
+  id       String @id @default(uuid())
+  userId   String @unique
+  settings Json   @default("{}")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

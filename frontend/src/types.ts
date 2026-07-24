@@ -63,13 +63,26 @@ export interface Project {
   }[];
 }
 
+export interface NotificationSettings {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  digestFrequency: 'daily' | 'weekly' | 'never';
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean;
+}
+
 export interface AppSettings {
   theme: 'obsidian' | 'slate' | 'light';
-  accentColor: string; // e.g., 'blue', 'purple', 'emerald', 'amber', 'rose'
+  accentColor: string;
   glassmorphism: boolean;
   density: 'compact' | 'standard' | 'cozy';
   soundEffects: boolean;
   smartTransitions: boolean;
+  language: string;
+  notifications: NotificationSettings;
+  security: SecuritySettings;
 }
 
 export interface UserProfile {

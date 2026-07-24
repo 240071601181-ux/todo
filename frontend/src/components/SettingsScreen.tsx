@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { 
   Sliders, 
   Palette, 
@@ -9,7 +8,15 @@ import {
   Zap, 
   Layout, 
   Activity,
-  CheckCircle2
+  Bell,
+  Shield,
+  Globe,
+  Mail,
+  Smartphone,
+  KeyRound,
+  CheckCircle2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { AppSettings } from '../types';
 
@@ -17,6 +24,15 @@ interface SettingsScreenProps {
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
+
+const languages = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'es', label: 'Spanish', native: 'Español' },
+  { code: 'fr', label: 'French', native: 'Français' },
+  { code: 'de', label: 'German', native: 'Deutsch' },
+  { code: 'ja', label: 'Japanese', native: '日本語' },
+  { code: 'zh', label: 'Chinese', native: '中文' },
+];
 
 export default function SettingsScreen({ settings, setSettings }: SettingsScreenProps) {
   
@@ -42,6 +58,38 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
 
   const handleChangeAccent = (accentColor: AppSettings['accentColor']) => {
     setSettings(prev => ({ ...prev, accentColor }));
+  };
+
+  const handleChangeLanguage = (language: string) => {
+    setSettings(prev => ({ ...prev, language }));
+  };
+
+  const handleTogglePushNotifications = () => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, pushEnabled: !prev.notifications.pushEnabled },
+    }));
+  };
+
+  const handleToggleEmailNotifications = () => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, emailEnabled: !prev.notifications.emailEnabled },
+    }));
+  };
+
+  const handleChangeDigestFrequency = (digestFrequency: 'daily' | 'weekly' | 'never') => {
+    setSettings(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, digestFrequency },
+    }));
+  };
+
+  const handleToggleTwoFactor = () => {
+    setSettings(prev => ({
+      ...prev,
+      security: { ...prev.security, twoFactorEnabled: !prev.security.twoFactorEnabled },
+    }));
   };
 
   const getAccentColorHex = () => {
@@ -85,7 +133,6 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
             <Palette className="w-4 h-4 text-blue-500" style={{ color: activeAccent }} /> Appearance Theme
           </h3>
 
-          {/* Theme Presets */}
           <div className="space-y-3">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Visual Base Profile</span>
             <div className="grid grid-cols-3 gap-3">
@@ -96,7 +143,7 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
               ].map((themeItem) => (
                 <button
                   key={themeItem.id}
-                  onClick={() => handleChangeTheme(themeItem.id as any)}
+                  onClick={() => handleChangeTheme(themeItem.id as AppSettings['theme'])}
                   className={`p-3.5 border rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between h-20 ${
                     settings.theme === themeItem.id
                       ? 'bg-slate-900 border-blue-500/80 shadow-md'
@@ -113,7 +160,6 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
             </div>
           </div>
 
-          {/* Accent Color Pickers */}
           <div className="space-y-3">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Accent Highlight Color</span>
             <div className="flex flex-wrap gap-2.5">
@@ -126,7 +172,7 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
               ].map((accentItem) => (
                 <button
                   key={accentItem.id}
-                  onClick={() => handleChangeAccent(accentItem.id as any)}
+                  onClick={() => handleChangeAccent(accentItem.id)}
                   className={`h-9 px-3 rounded-xl border flex items-center gap-2 text-xs font-mono transition-all cursor-pointer ${
                     settings.accentColor === accentItem.id
                       ? 'bg-slate-900 text-white'
@@ -144,10 +190,10 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
           </div>
         </div>
 
-        {/* Card 2: Layout & Spacers */}
+        {/* Card 2: Layout & Language */}
         <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl space-y-5">
           <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2 border-b border-slate-800/40 pb-3">
-            <Layout className="w-4 h-4 text-emerald-500" /> Layout Density Settings
+            <Layout className="w-4 h-4 text-emerald-500" /> Layout & Language
           </h3>
 
           {/* Density selection */}
@@ -161,7 +207,7 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
               ].map((denseItem) => (
                 <button
                   key={denseItem.id}
-                  onClick={() => handleChangeDensity(denseItem.id as any)}
+                  onClick={() => handleChangeDensity(denseItem.id as AppSettings['density'])}
                   className={`p-3.5 border rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between h-20 ${
                     settings.density === denseItem.id
                       ? 'bg-slate-900 border-blue-500/80 shadow-md'
@@ -178,20 +224,159 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
             </div>
           </div>
 
-          <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/40 flex items-center gap-2.5 text-xs text-slate-400 leading-normal">
-            <Activity className="w-4 h-4 text-slate-500 shrink-0" />
-            <span>Density adjustments calibrate margins, paddings, and sidebar structures to prioritize higher content volume on large monitors.</span>
+          {/* Language selection */}
+          <div className="space-y-3">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+              <Globe className="w-3 h-3 inline-block mr-1" /> Interface Language
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleChangeLanguage(lang.code)}
+                  className={`px-3 py-2.5 border rounded-xl text-left transition-all cursor-pointer ${
+                    settings.language === lang.code
+                      ? 'bg-slate-900 border-blue-500/80 shadow-md'
+                      : 'bg-[#07090d] border-slate-800/60 hover:border-slate-700/40'
+                  }`}
+                  style={{
+                    borderColor: settings.language === lang.code ? activeAccent : undefined
+                  }}
+                >
+                  <span className="text-xs font-semibold text-slate-200 block">{lang.native}</span>
+                  <span className="text-[9px] text-slate-500 block">{lang.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Card 3: Advanced UI Hardware Toggles */}
+        {/* Card 3: Notifications */}
+        <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl space-y-4">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2 border-b border-slate-800/40 pb-3">
+            <Bell className="w-4 h-4 text-amber-500" /> Notification Preferences
+          </h3>
+
+          <div className="space-y-3">
+            {/* Push notifications toggle */}
+            <div className="p-3 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-slate-200 block flex items-center gap-1.5">
+                  <Smartphone className="w-3.5 h-3.5 text-slate-500" /> Push Notifications
+                </span>
+                <span className="text-[10px] text-slate-500 block">Receive alerts for due tasks and project updates</span>
+              </div>
+              <button
+                onClick={handleTogglePushNotifications}
+                className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${
+                  settings.notifications.pushEnabled ? 'bg-blue-500' : 'bg-slate-800'
+                }`}
+                style={{
+                  backgroundColor: settings.notifications.pushEnabled ? activeAccent : undefined
+                }}
+              >
+                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  settings.notifications.pushEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            {/* Email notifications toggle */}
+            <div className="p-3 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-slate-200 block flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-slate-500" /> Email Notifications
+                </span>
+                <span className="text-[10px] text-slate-500 block">Get email updates for task assignments and mentions</span>
+              </div>
+              <button
+                onClick={handleToggleEmailNotifications}
+                className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${
+                  settings.notifications.emailEnabled ? 'bg-blue-500' : 'bg-slate-800'
+                }`}
+                style={{
+                  backgroundColor: settings.notifications.emailEnabled ? activeAccent : undefined
+                }}
+              >
+                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  settings.notifications.emailEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            {/* Digest frequency */}
+            <div className="p-3 bg-[#07090d] border border-slate-800/80 rounded-xl">
+              <span className="text-xs font-semibold text-slate-200 block mb-2 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-slate-500" /> Digest Frequency
+              </span>
+              <div className="flex gap-2">
+                {(['daily', 'weekly', 'never'] as const).map((freq) => (
+                  <button
+                    key={freq}
+                    onClick={() => handleChangeDigestFrequency(freq)}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-mono transition-all cursor-pointer capitalize ${
+                      settings.notifications.digestFrequency === freq
+                        ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                        : 'bg-slate-900/40 text-slate-500 border border-slate-800/40 hover:text-slate-300'
+                    }`}
+                    style={{
+                      borderColor: settings.notifications.digestFrequency === freq ? activeAccent : undefined
+                    }}
+                  >
+                    {freq}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Security */}
+        <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl space-y-4">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2 border-b border-slate-800/40 pb-3">
+            <Shield className="w-4 h-4 text-red-500" /> Security & Authentication
+          </h3>
+
+          <div className="space-y-3">
+            {/* Two-factor toggle */}
+            <div className="p-3 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-slate-200 block flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-slate-500" /> Two-Factor Authentication
+                </span>
+                <span className="text-[10px] text-slate-500 block">Add an extra layer of security to your account</span>
+              </div>
+              <button
+                onClick={handleToggleTwoFactor}
+                className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${
+                  settings.security.twoFactorEnabled ? 'bg-blue-500' : 'bg-slate-800'
+                }`}
+                style={{
+                  backgroundColor: settings.security.twoFactorEnabled ? activeAccent : undefined
+                }}
+              >
+                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  settings.security.twoFactorEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/40">
+              <span className="text-[10px] font-mono text-slate-500 block leading-relaxed">
+                <Shield className="w-3 h-3 inline-block mr-1 text-emerald-500" />
+                Your account is secured with JWT-based authentication. Sessions expire after 15 minutes of inactivity.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5: Advanced UI Hardware Toggles */}
         <div className="bg-[#0c0f16] border border-slate-800/60 p-6 rounded-2xl space-y-4 md:col-span-2">
           <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2 border-b border-slate-800/40 pb-3">
             <Sliders className="w-4 h-4 text-purple-500" /> Advanced Physics & Graphics
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Toggle Glassmorphism */}
             <div className="p-4 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-200 block">Glassmorphism Backdrop</span>
@@ -212,7 +397,6 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
               </button>
             </div>
 
-            {/* Toggle Sound Effects */}
             <div className="p-4 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-200 block">Focus Soundboard Effects</span>
@@ -233,7 +417,6 @@ export default function SettingsScreen({ settings, setSettings }: SettingsScreen
               </button>
             </div>
 
-            {/* Toggle Smart Transitions */}
             <div className="p-4 bg-[#07090d] border border-slate-800/80 rounded-xl flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-200 block">Micro Transitions</span>

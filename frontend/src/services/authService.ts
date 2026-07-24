@@ -47,3 +47,21 @@ export async function resetPassword(token: string, password: string): Promise<{ 
   const { data } = await api.post<{ message: string }>('/auth/reset-password', { token, password })
   return data
 }
+
+export async function updateProfile(input: { name?: string; email?: string; account?: string }): Promise<BackendUser> {
+  const { data } = await api.put<{ user: BackendUser }>('/auth/profile', input)
+  return data.user
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await api.post('/auth/change-password', { currentPassword, newPassword })
+}
+
+export async function uploadAvatar(file: File): Promise<BackendUser> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  const { data } = await api.post<{ user: BackendUser }>('/auth/upload-avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data.user
+}

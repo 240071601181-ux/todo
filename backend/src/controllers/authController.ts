@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validation.js'
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, updateProfileSchema, changePasswordSchema } from '../utils/validation.js'
 import * as authService from '../services/authService.js'
 import { AuthError } from '../services/authService.js'
 
@@ -133,6 +133,72 @@ export async function resetPassword(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function updateProfile(req: Request, res: Response) {
+  const parsed = updateProfileSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      errors: parsed.error.flatten().fieldErrors,
+    })
+    return
+  }
+
+  try {
+    const user = await authService.updateProfile(req.user!.id, parsed.data)
+    res.json({ user })
+  } catch (err) {
+    if (err instanceof AuthError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    console.error('Update profile error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function changePassword(req: Request, res: Response) {
+  const parsed = changePasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      errors: parsed.error.flatten().fieldErrors,
+    })
+    return
+  }
+
+  try {
+    await authService.changePassword(req.user!.id, parsed.data.currentPassword, parsed.data.newPassword)
+    res.json({ message: 'Password changed successfully' })
+  } catch (err) {
+    if (err instanceof AuthError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    console.error('Change password error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+export async function uploadAvatar(req: Request, res: Response) {
+  if (!req.file) {
+    res.status(400).json({ message: 'No file uploaded' })
+    return
+  }
+
+  try {
+    const filePath = `/uploads/avatars/${req.file.filename}`
+    const user = await authService.uploadAvatar(req.user!.id, filePath)
+    res.json({ user })
+  } catch (err) {
+    if (err instanceof AuthError) {
+      res.status(err.status).json({ message: err.message })
+      return
+    }
+    console.error('Upload avatar error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

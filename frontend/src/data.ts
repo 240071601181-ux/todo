@@ -20,7 +20,16 @@ export const INITIAL_SETTINGS: AppSettings = {
   glassmorphism: true,
   density: 'standard',
   soundEffects: true,
-  smartTransitions: true
+  smartTransitions: true,
+  language: 'en',
+  notifications: {
+    pushEnabled: true,
+    emailEnabled: true,
+    digestFrequency: 'weekly',
+  },
+  security: {
+    twoFactorEnabled: false,
+  },
 };
 
 export const INITIAL_PROJECTS: Project[] = [

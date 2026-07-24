@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import {
   INITIAL_USER,
   INITIAL_SETTINGS,
@@ -10,6 +10,7 @@ import type { Task, Project, CalendarEvent, AppSettings, UserProfile, Notificati
 import * as authService from '../services/authService'
 import * as projectService from '../services/projectService'
 import * as notificationService from '../services/notificationService'
+import * as settingsService from '../services/settingsService'
 
 interface AppContextValue {
   user: UserProfile
@@ -62,6 +63,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const settingsSaveTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  const saveSettings = useCallback(async (s: AppSettings) => {
+    try {
+      await settingsService.updateSettings(s)
+    } catch {
+      // silently fail
+    }
+  }, [])
+
+  useEffect(() => {
+    if (settingsSaveTimer.current) clearTimeout(settingsSaveTimer.current)
+    settingsSaveTimer.current = setTimeout(() => {
+      saveSettings(settings)
+    }, 2000)
+    return () => {
+      if (settingsSaveTimer.current) clearTimeout(settingsSaveTimer.current)
+    }
+  }, [settings, saveSettings])
 
   const refreshNotifications = useCallback(async () => {
     try {
@@ -124,6 +144,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true)
         await fetchProjects()
         await refreshNotifications()
+        settingsService.getSettings().then(saved => {
+          if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+            setSettings(prev => ({ ...prev, ...saved } as AppSettings))
+          }
+        }).catch(() => {})
       })
       .catch(async () => {
         const storedRefreshToken = localStorage.getItem('refreshToken')
@@ -136,6 +161,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setIsAuthenticated(true)
             await fetchProjects()
             await refreshNotifications()
+            settingsService.getSettings().then(saved => {
+              if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+                setSettings(prev => ({ ...prev, ...saved } as AppSettings))
+              }
+            }).catch(() => {})
           } catch {
             localStorage.removeItem('accessToken')
             localStorage.removeItem('refreshToken')
