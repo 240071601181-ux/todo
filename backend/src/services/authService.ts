@@ -13,7 +13,13 @@ import type { z } from 'zod'
 type RegisterInput = z.infer<typeof registerSchema>
 type LoginInput = z.infer<typeof loginSchema>
 
-const RESET_SECRET = process.env.JWT_SECRET ?? 'fallback-access-secret'
+function requireResetSecret(): string {
+  const value = process.env.JWT_RESET_SECRET
+  if (!value) {
+    throw new Error('Missing required environment variable: JWT_RESET_SECRET')
+  }
+  return value
+}
 
 function generateTokenId(): string {
   return crypto.randomUUID()
@@ -176,18 +182,25 @@ export async function forgotPassword(input: { email: string }) {
     return { message: 'If that email is registered, a reset link has been sent.' }
   }
 
-  const resetToken = jwt.sign({ userId: user.id, type: 'reset' }, RESET_SECRET, { expiresIn: '1h' })
+  const resetSecret = requireResetSecret()
+  const resetToken = jwt.sign({ userId: user.id, type: 'reset' }, resetSecret, { expiresIn: '1h' })
 
-  return {
+  const response: { message: string; resetToken?: string } = {
     message: 'If that email is registered, a reset link has been sent.',
-    resetToken,
   }
+
+  if (process.env.NODE_ENV !== 'production') {
+    response.resetToken = resetToken
+  }
+
+  return response
 }
 
 export async function resetPassword(input: { token: string; password: string }) {
   let payload: { userId: string }
   try {
-    payload = jwt.verify(input.token, RESET_SECRET) as { userId: string }
+    const resetSecret = requireResetSecret()
+    payload = jwt.verify(input.token, resetSecret) as { userId: string }
   } catch {
     throw new AuthError('Invalid or expired reset token', 400)
   }

@@ -1,7 +1,15 @@
 import jwt from 'jsonwebtoken'
 
-const ACCESS_SECRET = process.env.JWT_SECRET ?? 'fallback-access-secret'
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? 'fallback-refresh-secret'
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+const ACCESS_SECRET = requireEnv('JWT_SECRET')
+const REFRESH_SECRET = requireEnv('JWT_REFRESH_SECRET')
 
 export interface AccessTokenPayload {
   userId: string

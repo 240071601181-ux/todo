@@ -9,22 +9,34 @@ export default function ProjectsPage() {
   const navigate = useNavigate()
 
   const handleCreate = async (data: Parameters<typeof projectService.createProject>[0]) => {
-    const created = await projectService.createProject(data)
-    const mapped = projectService.mapProject(created)
-    setProjects(prev => [...prev, mapped])
-    navigate(`/projects/${mapped.id}`)
+    try {
+      const created = await projectService.createProject(data)
+      const mapped = projectService.mapProject(created)
+      setProjects(prev => [...prev, mapped])
+      navigate(`/projects/${mapped.id}`)
+    } catch (err) {
+      console.error('Create project failed:', err)
+    }
   }
 
   const handleUpdate = async (projectId: string, data: Parameters<typeof projectService.updateProject>[1]) => {
-    const updated = await projectService.updateProject(projectId, data)
-    const mapped = projectService.mapProject(updated)
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...mapped, pulseFeed: p.pulseFeed } : p))
+    try {
+      const updated = await projectService.updateProject(projectId, data)
+      const mapped = projectService.mapProject(updated)
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...mapped, pulseFeed: p.pulseFeed } : p))
+    } catch (err) {
+      console.error('Update project failed:', err)
+    }
   }
 
   const handleDelete = async (projectId: string) => {
-    await projectService.deleteProject(projectId)
-    setProjects(prev => prev.filter(p => p.id !== projectId))
-    navigate('/projects')
+    try {
+      await projectService.deleteProject(projectId)
+      setProjects(prev => prev.filter(p => p.id !== projectId))
+      navigate('/projects')
+    } catch (err) {
+      console.error('Delete project failed:', err)
+    }
   }
 
   return (

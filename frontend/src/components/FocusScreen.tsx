@@ -4,11 +4,7 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  Volume2, 
-  VolumeX, 
   X, 
-  Sliders, 
-  Zap, 
   Maximize2,
   CheckCircle2,
   Radio
@@ -38,8 +34,10 @@ export default function FocusScreen({ settings, setActiveTab, setUser }: FocusSc
 
   const [focusCompleted, setFocusCompleted] = useState(false);
 
-  // Ref to hold interval
+  // Refs to hold interval and current minutes
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const minutesRef = useRef(minutes);
+  minutesRef.current = minutes;
 
   // Interval hook
   useEffect(() => {
@@ -47,7 +45,7 @@ export default function FocusScreen({ settings, setActiveTab, setUser }: FocusSc
       intervalRef.current = setInterval(() => {
         setSeconds((prevSeconds) => {
           if (prevSeconds === 0) {
-            if (minutes === 0) {
+            if (minutesRef.current === 0) {
               // Timer finished!
               setIsActive(false);
               setFocusCompleted(true);
@@ -86,7 +84,7 @@ export default function FocusScreen({ settings, setActiveTab, setUser }: FocusSc
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isActive, minutes]);
+  }, [isActive]);
 
   // Adjust default presets
   const handleSetPreset = (presetMins: number) => {
@@ -256,7 +254,7 @@ export default function FocusScreen({ settings, setActiveTab, setUser }: FocusSc
 
           {/* Maximize mock or visual toggle */}
           <button
-            onClick={() => alert("Simulated ambient fullscreen mode initialized.")}
+            onClick={() => document.documentElement.requestFullscreen().catch(() => {})}
             className="p-3.5 bg-slate-950/80 border border-slate-900 text-slate-400 hover:text-white rounded-2xl hover:bg-slate-900 transition-all cursor-pointer shadow-md"
             title="Toggle Fullscreen"
           >

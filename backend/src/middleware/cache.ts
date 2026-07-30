@@ -27,12 +27,3 @@ export function responseCache(duration: number = 60) {
     next()
   }
 }
-
-export function clearCache(pattern?: string) {
-  if (pattern) {
-    const keys = cache.keys().filter((k) => k.includes(pattern))
-    keys.forEach((k) => cache.del(k))
-  } else {
-    cache.flushAll()
-  }
-}

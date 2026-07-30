@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Mail, Lock, User, ArrowRight, Sparkles, Terminal, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ShieldAlert } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface LoginScreenProps {
@@ -63,6 +63,14 @@ export default function LoginScreen({ onLogin, onRegister, settings }: LoginScre
     rose: 'text-rose-500 bg-rose-500/10 border-rose-500/30 focus:border-rose-500 focus:ring-rose-500/20',
   };
 
+  const accentColorsHex: Record<string, string> = {
+    blue: '#3b82f6',
+    purple: '#a855f7',
+    emerald: '#10b981',
+    amber: '#f59e0b',
+    rose: '#f43f5e',
+  };
+
   const activeAccent = settings.accentColor;
   const accentClass = accentColors[activeAccent] || accentColors.blue;
 
@@ -100,7 +108,7 @@ export default function LoginScreen({ onLogin, onRegister, settings }: LoginScre
           </motion.div>
           
           <h1 className="font-display text-2xl font-bold tracking-tight text-white flex items-center justify-center gap-2">
-            FAST<span className={`text-${activeAccent}-500 font-extrabold uppercase`}>ODO</span>
+            FAST<span className="font-extrabold uppercase" style={{ color: accentColorsHex[activeAccent] }}>ODO</span>
           </h1>
           <p className="text-slate-400 text-xs mt-1 font-mono tracking-widest uppercase">
             Velocity Dark Suite // v2.4.0
@@ -193,9 +201,9 @@ export default function LoginScreen({ onLogin, onRegister, settings }: LoginScre
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full mt-2 inline-flex items-center justify-center gap-2 bg-${activeAccent}-500 hover:bg-${activeAccent}-600 text-white font-medium text-sm py-3 px-4 rounded-xl transition-all cursor-pointer shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none`}
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 text-white font-medium text-sm py-3 px-4 rounded-xl transition-all cursor-pointer shadow-[0_4px_20px_rgba(59,130,246,0.15)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
             style={{
-              backgroundColor: activeAccent === 'blue' ? '#3b82f6' : activeAccent === 'purple' ? '#a855f7' : activeAccent === 'emerald' ? '#10b981' : activeAccent === 'amber' ? '#f59e0b' : '#f43f5e'
+              backgroundColor: accentColorsHex[activeAccent]
             }}
           >
             {isLoading ? (
@@ -265,9 +273,9 @@ export default function LoginScreen({ onLogin, onRegister, settings }: LoginScre
               setError('');
               setIsRegister(!isRegister);
             }}
-            className={`text-${activeAccent}-500 hover:underline font-medium transition-all`}
+            className="hover:underline font-medium transition-all"
             style={{
-              color: activeAccent === 'blue' ? '#3b82f6' : activeAccent === 'purple' ? '#a855f7' : activeAccent === 'emerald' ? '#10b981' : activeAccent === 'amber' ? '#f59e0b' : '#f43f5e'
+              color: accentColorsHex[activeAccent]
             }}
           >
             {isRegister ? 'Sign In' : 'Create an Account'}

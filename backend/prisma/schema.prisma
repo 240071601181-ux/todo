@@ -21,8 +21,8 @@ model User {
   notifications  Notification[]
   projects       Project[]
   refreshTokens  RefreshToken[]
-  settings       UserSettings?
   tasks          Task[]
+  settings       UserSettings?
 }
 
 model UserSettings {

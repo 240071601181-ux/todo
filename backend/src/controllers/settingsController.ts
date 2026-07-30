@@ -5,7 +5,8 @@ export async function getSettings(req: Request, res: Response) {
   try {
     const settings = await settingsService.getSettings(req.user!.id)
     res.json({ settings })
-  } catch {
+  } catch (err) {
+    console.error('Settings get error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -20,7 +21,8 @@ export async function updateSettings(req: Request, res: Response) {
   try {
     const updated = await settingsService.updateSettings(req.user!.id, settings)
     res.json({ settings: updated })
-  } catch {
+  } catch (err) {
+    console.error('Settings update error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

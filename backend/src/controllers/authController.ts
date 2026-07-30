@@ -79,7 +79,8 @@ export async function logout(req: Request, res: Response) {
   try {
     await authService.logoutUser(refreshToken)
     res.json({ message: 'Logged out successfully' })
-  } catch {
+  } catch (err) {
+    console.error('Logout error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -110,7 +111,8 @@ export async function forgotPassword(req: Request, res: Response) {
   try {
     const result = await authService.forgotPassword(parsed.data)
     res.json(result)
-  } catch {
+  } catch (err) {
+    console.error('Forgot password error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

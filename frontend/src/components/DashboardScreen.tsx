@@ -3,8 +3,6 @@ import { motion } from 'motion/react';
 import { 
   TrendingUp, 
   CheckCircle2, 
-  Clock, 
-  AlertTriangle, 
   Zap, 
   Play, 
   Calendar, 
@@ -12,7 +10,6 @@ import {
   Activity, 
   CheckSquare, 
   Star,
-  Users,
   BarChart3,
   Layers
 } from 'lucide-react';
@@ -535,7 +532,6 @@ export default function DashboardScreen({
                     key={task.id}
                     onClick={() => {
                       setSelectedTaskId(task.id);
-                      setActiveTab('task-detail');
                     }}
                     className={`p-3 bg-[#090c12]/70 hover:bg-slate-900/60 border border-slate-800/50 hover:border-slate-800 rounded-xl transition-all flex items-center justify-between gap-4 group cursor-pointer ${
                       isCompleted ? 'opacity-60' : ''

@@ -25,6 +25,7 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<string>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
+  const [isLoading, setIsLoading] = useState(true)
   const [categories, setCategories] = useState<taskService.BackendCategory[]>([])
   const [allTags, setAllTags] = useState<taskService.BackendTag[]>([])
 
@@ -36,6 +37,7 @@ export default function TasksPage() {
   }, [])
 
   const fetchTasks = useCallback(async () => {
+    setIsLoading(true)
     try {
       const params: taskService.TaskQueryParams = {
         page,
@@ -71,6 +73,8 @@ export default function TasksPage() {
       setTotalPages(result.totalPages)
     } catch (err) {
       console.error('Failed to fetch tasks:', err)
+    } finally {
+      setIsLoading(false)
     }
   }, [page, limit, searchQuery, filterProject, filterCategory, filterPriority, filterStatus, sortBy, sortOrder, showArchived])
 
@@ -148,6 +152,7 @@ export default function TasksPage() {
 
   return (
     <TasksScreen
+      isLoading={isLoading}
       tasks={tasks}
       setTasks={setTasks}
       selectedTaskId={null}

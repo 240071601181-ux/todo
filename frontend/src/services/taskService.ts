@@ -224,6 +224,6 @@ export function mapTask(
     storyPoints: 1,
     milestones: [],
     comments: [],
-    tags: bt.tags.map(tt => tt.tag.name),
+    tags: bt.tags.filter(tt => tt.tag != null).map(tt => tt.tag.name),
   }
 }

@@ -217,12 +217,6 @@ export async function attachTags(taskId: string, tagIds: string[]): Promise<void
   })
 }
 
-export async function detachTags(taskId: string, tagIds: string[]): Promise<void> {
-  await prisma.taskTag.deleteMany({
-    where: { taskId, tagId: { in: tagIds } },
-  })
-}
-
 export async function setTags(taskId: string, tagIds: string[]): Promise<void> {
   await prisma.taskTag.deleteMany({ where: { taskId } })
   if (tagIds.length > 0) {

@@ -1,6 +1,0 @@
-{
-  "name": "FASTODO",
-  "description": "Velocity Dark Suite - A premium, high-fidelity dark-themed collaborative developer & designer productivity suite with live-updating dashboards, task boards, calendars, active project feeds, focus modes, settings customizers, and profile progression systems.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

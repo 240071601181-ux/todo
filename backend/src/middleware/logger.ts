@@ -18,5 +18,3 @@ export const requestLogger = morgan(
     skip: (_req: Request, res: Response) => res.statusCode < 400,
   }
 )
-
-export const accessLogger = morgan('combined')

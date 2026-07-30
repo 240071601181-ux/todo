@@ -7,6 +7,7 @@ import {
 import { CalendarEvent, AppSettings, CalendarView } from '../types';
 
 interface CalendarScreenProps {
+  isLoading?: boolean;
   events: CalendarEvent[];
   setEvents: React.Dispatch<React.SetStateAction<CalendarEvent[]>>;
   onCreateEvent: (data: { title: string; date: string; time?: string; duration?: string; type?: string; color?: string }) => Promise<void>;
@@ -71,7 +72,7 @@ function getWeekDays(date: Date): Date[] {
   });
 }
 
-export default function CalendarScreen({ events, setEvents, onCreateEvent, onUpdateEvent, onDeleteEvent, settings }: CalendarScreenProps) {
+export default function CalendarScreen({ isLoading, events, setEvents, onCreateEvent, onUpdateEvent, onDeleteEvent, settings }: CalendarScreenProps) {
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDate(today), [today]);
   const [view, setView] = useState<CalendarView>('month');
@@ -207,7 +208,7 @@ export default function CalendarScreen({ events, setEvents, onCreateEvent, onUpd
       return;
     }
     if (draggedEvent.id.startsWith('task-')) return;
-    await onUpdateEvent(draggedEvent.id, { date: `${dateStr}T00:00:00.000Z` });
+    await onUpdateEvent(draggedEvent.id, { date: dateStr });
     setEvents(prev => prev.map(ev => ev.id === draggedEvent.id ? { ...ev, date: dateStr } : ev));
     setDraggedEvent(null);
   };
@@ -224,6 +225,19 @@ export default function CalendarScreen({ events, setEvents, onCreateEvent, onUpd
     const m = parseInt(parts[1]) - 1;
     return `${MONTHS[m].slice(0, 3)} ${parseInt(parts[2])}, ${parts[0]}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-[#07090d] text-slate-100 p-8 space-y-8 font-sans">
+        <div className="border-b border-slate-800/50 pb-6">
+          <div className="h-3 w-48 bg-slate-800/50 rounded animate-pulse mb-2" />
+          <div className="h-8 w-72 bg-slate-800/50 rounded animate-pulse mb-1" />
+          <div className="h-4 w-96 bg-slate-800/30 rounded animate-pulse" />
+        </div>
+        <div className="bg-[#0c0f16]/90 border border-slate-800/60 rounded-2xl p-5 h-96 animate-pulse" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#07090d] text-slate-100 p-8 space-y-8 font-sans">

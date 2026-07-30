@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
 import { 
   ArrowLeft, 
   CheckSquare, 
@@ -7,9 +6,6 @@ import {
   Calendar, 
   Send, 
   ChevronRight, 
-  User, 
-  Tag, 
-  Play, 
   CheckCircle2, 
   AlertTriangle,
   BookOpen,

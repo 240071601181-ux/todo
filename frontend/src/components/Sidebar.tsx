@@ -1,5 +1,3 @@
-import React from 'react';
-import { motion } from 'motion/react';
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -10,9 +8,7 @@ import {
   User, 
   LogOut, 
   Zap, 
-  TrendingUp,
-  Cpu,
-  Bell
+  Cpu
 } from 'lucide-react';
 import type { AppSettings, UserProfile, Project, Notification } from '../types';
 import NotificationBell from './NotificationBell';

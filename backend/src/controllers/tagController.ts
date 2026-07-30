@@ -7,7 +7,8 @@ export async function list(_req: Request, res: Response) {
   try {
     const tags = await tagService.listTags()
     res.json({ tags })
-  } catch {
+  } catch (err) {
+    console.error('Tag list error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -90,6 +91,7 @@ export async function remove(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Tag delete error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

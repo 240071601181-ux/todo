@@ -18,7 +18,8 @@ export async function list(req: Request, res: Response) {
   try {
     const result = await taskService.listTasks(req.user!.id, query.data)
     res.json(result)
-  } catch {
+  } catch (err) {
+    console.error('Task list error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -109,6 +110,7 @@ export async function remove(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Task delete error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -128,6 +130,7 @@ export async function toggle(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Task toggle error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -147,6 +150,7 @@ export async function archive(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Task archive error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -166,6 +170,7 @@ export async function restore(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Task restore error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -191,6 +196,7 @@ export async function reorder(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Task reorder error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

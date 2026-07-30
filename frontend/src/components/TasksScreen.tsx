@@ -11,12 +11,10 @@ import {
   CheckCircle2, 
   Trash2, 
   Clock, 
-  UserPlus, 
   FolderPlus,
   HelpCircle,
   Tag,
   Archive,
-  RotateCcw,
   RefreshCw,
   ChevronLeft,
   ChevronRight
@@ -26,6 +24,7 @@ import * as taskService from '../services/taskService';
 import type { BackendCategory, BackendTag } from '../services/taskService';
 
 interface TasksScreenProps {
+  isLoading?: boolean;
   tasks: Task[];
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
   selectedTaskId: string | null;
@@ -71,8 +70,9 @@ interface TasksScreenProps {
 }
 
 export default function TasksScreen({ 
+  isLoading,
   tasks, 
-  setTasks, 
+  setTasks,
   selectedTaskId,
   setSelectedTaskId, 
   setActiveTab,
@@ -115,8 +115,8 @@ export default function TasksScreen({
   const [newCategoryId, setNewCategoryId] = useState('');
   const [newPriority, setNewPriority] = useState<TaskPriority>('medium');
   const [newDueDate, setNewDueDate] = useState('');
-  const [newStoryPoints, setNewStoryPoints] = useState(3);
   const [newTags, setNewTags] = useState('');
+  const [newStoryPoints, setNewStoryPoints] = useState(1);
 
   // Filtering logic (local filtering on already-fetched data)
   const filteredTasks = tasks.filter(task => {
@@ -192,7 +192,6 @@ export default function TasksScreen({
         layoutId={`task-${task.id}`}
         onClick={() => {
           setSelectedTaskId(task.id);
-          setActiveTab('task-detail');
         }}
         draggable
         onDragStart={() => handleDragStart(task.id)}
@@ -317,6 +316,23 @@ export default function TasksScreen({
       </motion.div>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-[#07090d] text-slate-100 p-8 space-y-8 font-sans">
+        <div className="border-b border-slate-800/50 pb-6">
+          <div className="h-3 w-48 bg-slate-800/50 rounded animate-pulse mb-2" />
+          <div className="h-8 w-72 bg-slate-800/50 rounded animate-pulse mb-1" />
+          <div className="h-4 w-96 bg-slate-800/30 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-[#0c0f16]/90 border border-slate-800/60 rounded-2xl p-5 h-64 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#07090d] text-slate-100 p-8 space-y-8 font-sans">
@@ -616,7 +632,6 @@ export default function TasksScreen({
                       key={task.id}
                       onClick={() => {
                         setSelectedTaskId(task.id);
-                        setActiveTab('task-detail');
                       }}
                       className="hover:bg-slate-900/40 cursor-pointer transition-colors group text-xs text-slate-300"
                     >
@@ -798,7 +813,7 @@ export default function TasksScreen({
               setNewCategoryId('');
               setNewPriority('medium');
               setNewDueDate('');
-              setNewStoryPoints(3);
+              setNewStoryPoints(1);
               setNewTags('');
               setShowAddModal(false);
             }} className="space-y-4">

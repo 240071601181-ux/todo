@@ -1,11 +1,6 @@
-import React from 'react';
 import { 
   Sliders, 
   Palette, 
-  Sparkles, 
-  Layers, 
-  Volume2, 
-  Zap, 
   Layout, 
   Activity,
   Bell,
@@ -14,9 +9,6 @@ import {
   Mail,
   Smartphone,
   KeyRound,
-  CheckCircle2,
-  Eye,
-  EyeOff,
 } from 'lucide-react';
 import { AppSettings } from '../types';
 

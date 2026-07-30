@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppProvider } from './context/AppProvider'
@@ -7,18 +8,19 @@ import AuthenticatedLayout from './components/layout/AuthenticatedLayout'
 import FocusLayout from './components/layout/FocusLayout'
 import LoadingPage from './pages/LoadingPage'
 import NotFoundPage from './pages/NotFoundPage'
-import LoginPage from './pages/LoginPage'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import DashboardPage from './pages/DashboardPage'
-import TasksPage from './pages/TasksPage'
-import TaskDetailPage from './pages/TaskDetailPage'
-import ProjectsPage from './pages/ProjectsPage'
-import CalendarPage from './pages/CalendarPage'
-import FocusPage from './pages/FocusPage'
-import SettingsPage from './pages/SettingsPage'
-import ProfilePage from './pages/ProfilePage'
-import NotificationsPage from './pages/NotificationsPage'
+
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const TasksPage = lazy(() => import('./pages/TasksPage'))
+const TaskDetailPage = lazy(() => import('./pages/TaskDetailPage'))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'))
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const FocusPage = lazy(() => import('./pages/FocusPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,39 +32,45 @@ const queryClient = new QueryClient({
   },
 })
 
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-            <Route path="/loading" element={<LoadingPage />} />
-            <Route
-              path="/focus"
-              element={
-                <ProtectedRoute>
-                  <FocusLayout><FocusPage /></FocusLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/tasks/:id" element={<TaskDetailPage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/projects/:id" element={<ProjectsPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
+          <SuspenseWrapper>
+            <Routes>
+              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+              <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+              <Route path="/loading" element={<LoadingPage />} />
+              <Route
+                path="/focus"
+                element={
+                  <ProtectedRoute>
+                    <FocusLayout><FocusPage /></FocusLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/tasks" element={<TasksPage />} />
+                <Route path="/tasks/:id" element={<TaskDetailPage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/projects/:id" element={<ProjectsPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+            </Routes>
+          </SuspenseWrapper>
         </BrowserRouter>
       </AppProvider>
     </QueryClientProvider>

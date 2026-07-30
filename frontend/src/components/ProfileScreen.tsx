@@ -1,10 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { motion } from 'motion/react';
 import { 
   Award, 
-  Zap, 
   TrendingUp, 
-  Activity, 
   Clock, 
   CheckCircle2, 
   LogOut, 
@@ -12,7 +9,6 @@ import {
   Compass, 
   Flame,
   UserCheck,
-  Send,
   Sliders,
   Pencil,
   Camera,

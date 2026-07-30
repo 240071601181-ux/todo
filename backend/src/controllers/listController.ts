@@ -7,7 +7,8 @@ export async function list(req: Request, res: Response) {
   try {
     const lists = await listService.listLists(req.user!.id)
     res.json({ lists })
-  } catch {
+  } catch (err) {
+    console.error('List tasks error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

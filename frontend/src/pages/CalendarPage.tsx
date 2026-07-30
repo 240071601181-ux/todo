@@ -6,10 +6,12 @@ import * as taskService from '../services/taskService'
 import type { CalendarEvent } from '../types'
 
 export default function CalendarPage() {
-  const { settings, tasks: ctxTasks } = useApp()
+  const { settings } = useApp()
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const loadEvents = useCallback(async () => {
+    setIsLoading(true)
     try {
       const [backendEvents, tasksResult] = await Promise.all([
         calendarService.getEvents(),
@@ -41,6 +43,8 @@ export default function CalendarPage() {
       setEvents(merged)
     } catch {
       setEvents([])
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -49,26 +53,39 @@ export default function CalendarPage() {
   }, [loadEvents])
 
   const handleCreateEvent = async (data: Parameters<typeof calendarService.createEvent>[0]) => {
-    const created = await calendarService.createEvent(data)
-    const mapped = calendarService.mapEvent(created)
-    setEvents(prev => [...prev, mapped])
+    try {
+      const created = await calendarService.createEvent(data)
+      const mapped = calendarService.mapEvent(created)
+      setEvents(prev => [...prev, mapped])
+    } catch (err) {
+      console.error('Create event failed:', err)
+    }
   }
 
   const handleUpdateEvent = async (id: string, data: Parameters<typeof calendarService.updateEvent>[1]) => {
     if (id.startsWith('task-')) return
-    const updated = await calendarService.updateEvent(id, data)
-    const mapped = calendarService.mapEvent(updated)
-    setEvents(prev => prev.map(e => e.id === id ? mapped : e))
+    try {
+      const updated = await calendarService.updateEvent(id, data)
+      const mapped = calendarService.mapEvent(updated)
+      setEvents(prev => prev.map(e => e.id === id ? mapped : e))
+    } catch (err) {
+      console.error('Update event failed:', err)
+    }
   }
 
   const handleDeleteEvent = async (id: string) => {
     if (id.startsWith('task-')) return
-    await calendarService.deleteEvent(id)
-    setEvents(prev => prev.filter(e => e.id !== id))
+    try {
+      await calendarService.deleteEvent(id)
+      setEvents(prev => prev.filter(e => e.id !== id))
+    } catch (err) {
+      console.error('Delete event failed:', err)
+    }
   }
 
   return (
     <CalendarScreen
+      isLoading={isLoading}
       events={events}
       setEvents={setEvents}
       onCreateEvent={handleCreateEvent}

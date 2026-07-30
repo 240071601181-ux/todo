@@ -420,7 +420,6 @@ export default function ProjectsScreen({
                     key={t.id}
                     onClick={() => {
                       setSelectedTaskId(t.id);
-                      setActiveTab('task-detail');
                     }}
                     className="p-4 bg-[#0c0f16]/90 border border-slate-800/60 hover:border-slate-800 hover:bg-slate-900/40 rounded-xl transition-all flex items-center justify-between gap-4 cursor-pointer group"
                   >

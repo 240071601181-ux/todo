@@ -7,7 +7,8 @@ export async function list(_req: Request, res: Response) {
   try {
     const categories = await categoryService.listCategories()
     res.json({ categories })
-  } catch {
+  } catch (err) {
+    console.error('Category list error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -90,6 +91,7 @@ export async function remove(req: Request, res: Response) {
       res.status(err.status).json({ message: err.message })
       return
     }
+    console.error('Category delete error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 }

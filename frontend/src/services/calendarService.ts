@@ -64,7 +64,7 @@ export function mapEvent(be: BackendCalendarEvent): CalendarEvent {
   return {
     id: be.id,
     title: be.title,
-    date: be.date.split('T')[0],
+    date: be.date ? be.date.split('T')[0] : '',
     time: be.time ?? undefined,
     duration: be.duration ?? undefined,
     type: be.type,

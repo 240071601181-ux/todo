@@ -78,12 +78,6 @@ export default function NotificationsScreen({
     )
   }
 
-  const grouped: Record<string, Notification[]> = {}
-  for (const n of notifications) {
-    if (!grouped[n.type]) grouped[n.type] = []
-    grouped[n.type].push(n)
-  }
-
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-800/60 flex items-center justify-between shrink-0">

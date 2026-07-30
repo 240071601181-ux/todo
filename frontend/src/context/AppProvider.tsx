@@ -63,15 +63,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const settingsSaveTimer = useRef<ReturnType<typeof setTimeout>>()
+  const settingsSaveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const saveSettings = useCallback(async (s: AppSettings) => {
+    if (!isAuthenticated) return
     try {
       await settingsService.updateSettings(s)
     } catch {
       // silently fail
     }
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (settingsSaveTimer.current) clearTimeout(settingsSaveTimer.current)
@@ -85,7 +86,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshNotifications = useCallback(async () => {
     try {
-      await notificationService.generateNotifications()
       const [data, count] = await Promise.all([
         notificationService.getNotifications({ limit: 50 }),
         notificationService.getUnreadCount(),
