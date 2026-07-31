@@ -1,3 +1,0 @@
-﻿Server running on http://0.0.0.0:3001
-POST /api/auth/login 401 39 - 3409.356 ms {"password":"[REDACTED]","email":"santhosh@gmail.com"}
-POST /api/auth/login 400 87 - 1.604 ms {}
