@@ -6,6 +6,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   // @ts-expect-error - type conflict between hoisted vite versions
   plugins: [react(), tailwindcss()],
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
